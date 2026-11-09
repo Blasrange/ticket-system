@@ -1,0 +1,23 @@
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const platformId = inject(PLATFORM_ID);
+
+  // localStorage solo está disponible en el browser, no en el servidor (SSR)
+  if (!isPlatformBrowser(platformId)) {
+    return next(req);
+  }
+
+  const token = localStorage.getItem('ccl_token');
+
+  // Si hay token, lo adjuntamos a la petición
+  if (token) {
+    const clonedReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+    return next(clonedReq);
+  }
+  return next(req);
+};

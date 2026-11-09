@@ -1,0 +1,130 @@
+<div class="agents-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Agentes de Soporte</h1>
+      <p class="page-subtitle">Directorio de agentes registrados en el sistema</p>
+    </div>
+    <button class="btn-refresh" (click)="loadAgents()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.spinning]="loading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <p-table
+      #dt
+      [value]="agents"
+      dataKey="agent_id"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      [paginator]="true"
+      [globalFilterFields]="['agent_id', 'full_name', 'email', 'role']"
+      [showGridlines]="false"
+      styleClass="agents-ptable"
+      rowHover="true"
+    >
+      <!-- Caption -->
+      <ng-template #caption>
+        <div class="table-caption">
+          <div class="caption-left">
+            <h2 class="table-card-title">Listado de Agentes</h2>
+            <p class="table-card-desc">{{ agents.length }} registros en total</p>
+          </div>
+          <div class="caption-right">
+            <p-button
+              label="Limpiar filtros"
+              icon="pi pi-filter-slash"
+              [outlined]="true"
+              size="small"
+              (onClick)="clearFilters()"
+              styleClass="btn-clear-table"
+            />
+            <p-iconfield>
+              <p-inputicon><i class="pi pi-search"></i></p-inputicon>
+              <input
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($event)"
+                placeholder="Buscar por nombre, email..."
+                class="search-input"
+              />
+            </p-iconfield>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Header -->
+      <ng-template #header>
+        <tr>
+          <th style="min-width: 135px">
+            <div class="th-cell">
+              ID Agente <p-columnFilter type="text" field="agent_id" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 250px">
+            <div class="th-cell">
+              Nombre <p-columnFilter type="text" field="full_name" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 220px">
+            <div class="th-cell">
+              Email <p-columnFilter type="text" field="email" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 180px">
+            <div class="th-cell">
+              Rol <p-columnFilter type="text" field="role" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 135px">
+            <div class="th-cell">Estado</div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <!-- Body -->
+      <ng-template #body let-agent>
+        <tr class="agent-row">
+          <td>
+            <span class="agent-id">{{ agent.agent_id }}</span>
+          </td>
+          <td>
+            <div class="user-cell">
+              <div class="user-av agent-av">{{ initial(agent.full_name) }}</div>
+              <span class="user-name">{{ agent.full_name }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="agent-email">{{ agent.email }}</span>
+          </td>
+          <td>
+            <span class="agent-role">{{ agent.role }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="translateStatus(agent.is_active)"
+              [severity]="getStatusSeverity(agent.is_active)"
+              styleClass="status-tag"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty -->
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="pi pi-users"></i>
+              <span>No se encontraron agentes registrados.</span>
+              <button class="btn-link" (click)="clearFilters()">Limpiar filtros</button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

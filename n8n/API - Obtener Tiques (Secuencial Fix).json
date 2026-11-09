@@ -1,0 +1,1250 @@
+{
+  "name": "API - Obtener Tiques (Secuencial Fix)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-email",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        -304
+      ],
+      "id": "5ac7308a-4275-41e8-ae6d-4d965a498b2d",
+      "name": "Webhook (Power Automate)",
+      "webhookId": "trigger-email"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1826195672,
+          "mode": "list",
+          "cachedResultName": "agents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1826195672"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.body.remitente }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -608,
+        -304
+      ],
+      "id": "1f6abdfa-016b-4fa0-8228-e2fed92e054f",
+      "name": "Buscar si es Agente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "name": "filter.operator.notEmpty"
+              }
+            },
+            {
+              "id": "cond-2",
+              "leftValue": "={{ $json.is_active ? $json.is_active.toString().toLowerCase() : '' }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -368,
+        -304
+      ],
+      "id": "1320614f-cab0-4c6f-8336-672b5c1b1a86",
+      "name": "Es Agente Activo?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer el ID del tique del asunto\nconst subject = $('Webhook (Power Automate)').first().json.body.asunto || \"\";\n\n// Busca \"TK-\" seguido de cualquier cantidad de números (ej: TK-001, TK-45, etc.)\nconst match = subject.match(/TK-\\d+/i);\n\nlet extractedId = null;\nif (match) {\n  extractedId = match[0];\n}\n\nreturn {\n  extracted_ticket_id: extractedId,\n  original_body: $('Webhook (Power Automate)').first().json.body\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -320
+      ],
+      "id": "f8afec81-054e-47db-859e-f6cb3f2a0776",
+      "name": "Extraer ID del Asunto"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "tickets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{ $json.extracted_ticket_id }}",
+            "status": "Closed",
+            "assigned_agent": "={{ $json.original_body.remitente }}",
+            "closed_at": "={{ $json.original_body.fecha }}",
+            "resolution_notes": "={{ $json.original_body.cuerpo }}"
+          },
+          "matchingColumns": [
+            "ticket_id"
+          ],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "body_html",
+              "displayName": "body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sender_email",
+              "displayName": "sender_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "assigned_agent",
+              "displayName": "assigned_agent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "closed_at",
+              "displayName": "closed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resolution_notes",
+              "displayName": "resolution_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        -320
+      ],
+      "id": "0deb2c4b-204b-40a2-b4e8-01e43fb30753",
+      "name": "Cerrar Tique",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1857388733,
+          "mode": "list",
+          "cachedResultName": "users",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1857388733"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $('Webhook (Power Automate)').item.json.body.remitente }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -208,
+        -144
+      ],
+      "id": "e439f3fb-b124-4315-afa5-dd3b8282f9d8",
+      "name": "Buscar Usuario",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1857388733,
+          "mode": "list",
+          "cachedResultName": "users",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1857388733"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user_id": "={{ $json.generated_user_id }}",
+            "full_name": "={{ $('Webhook (Power Automate)').first().json.body.remitente.split('@')[0] }}",
+            "email": "={{ $('Webhook (Power Automate)').first().json.body.remitente }}",
+            "department": "Unknown",
+            "created_at": "={{ $('Webhook (Power Automate)').first().json.body.fecha }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        560,
+        -160
+      ],
+      "id": "f1c90605-c24e-4e81-914d-84036c4dcb57",
+      "name": "Registrar Usuario Nuevo",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "tickets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{ $json.generated_ticket_id }}",
+            "subject": "={{ $json.original_body.asunto }}",
+            "body_html": "={{ $json.original_body.cuerpo }}",
+            "status": "Open",
+            "priority": "Medium",
+            "sender_email": "={{ $json.original_body.remitente }}",
+            "created_at": "={{ $json.original_body.fecha }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "body_html",
+              "displayName": "body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sender_email",
+              "displayName": "sender_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "assigned_agent",
+              "displayName": "assigned_agent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "closed_at",
+              "displayName": "closed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resolution_notes",
+              "displayName": "resolution_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        352,
+        32
+      ],
+      "id": "f4a08e9f-dfce-443b-ac2d-9bf55629807c",
+      "name": "Crear Tique",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "apps2@ccl.com.co",
+        "toEmail": "={{ $('Webhook (Power Automate)').first().json.body.remitente }}",
+        "subject": "=[{{ $('Generar ID Tique').item.json.generated_ticket_id }}] {{ $('Webhook (Power Automate)').first().json.body.asunto }}",
+        "html": "=<p>Hola,</p>\n<p>Hemos recibido tu solicitud de soporte. Se ha generado el tique con radicado: <strong>{{ $('Generar ID Tique').item.json.generated_ticket_id }}</strong>.</p>\n<p>Un agente revisará tu caso a la brevedad. Por favor, mantén este número en el asunto si necesitas responder.</p>\n<p>Saludos,<br>Mesa de Ayuda CCL</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        32
+      ],
+      "id": "976d5a17-281b-469c-9ea4-793d40c70b28",
+      "name": "Enviar Correo Confirmación",
+      "webhookId": "0287d15a-acf7-4d91-82be-da40989bf4ae",
+      "credentials": {
+        "smtp": {
+          "id": "nzlyPjwORAo2XaY5",
+          "name": "SMTP - Empresa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -48,
+        -144
+      ],
+      "id": "7a45a7ac-91bd-43e9-9690-aa7a46ec5da0",
+      "name": "Es Usuario Nuevo?"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auth-login",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        224
+      ],
+      "id": "e24d1287-d71e-4c07-ab0f-d14a62acfde1",
+      "name": "Webhook (Auth)",
+      "webhookId": "auth-login"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1826195672,
+          "mode": "list",
+          "cachedResultName": "agents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1826195672"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -608,
+        224
+      ],
+      "id": "68421466-8e37-4a55-99b9-e8629d94f4b0",
+      "name": "Buscar Agente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-exists",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "name": "filter.operator.notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -368,
+        224
+      ],
+      "id": "43f0f808-e862-4e14-ad72-81b62177af44",
+      "name": "Existe el Usuario?"
+    },
+    {
+      "parameters": {
+        "type": "SHA256",
+        "value": "={{ $('Webhook (Auth)').item.json.body.password }}",
+        "dataPropertyName": "hashedPassword"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        208
+      ],
+      "id": "f9314e9b-3f63-401f-b906-caf6e973853c",
+      "name": "Encriptar Contraseña"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-pass",
+              "leftValue": "={{ $('Buscar Agente').item.json.password_hash }}",
+              "rightValue": "={{ $json.hashedPassword }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        112,
+        208
+      ],
+      "id": "1ef4a22d-2682-4d3e-9073-4c7446c0d773",
+      "name": "Contraseña Correcta?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        320,
+        192
+      ],
+      "id": "6f40187a-3305-4978-a349-29a704763491",
+      "name": "Respuesta Exitosa (200)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Credenciales incorrectas\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        16,
+        448
+      ],
+      "id": "94350316-5cc5-40a5-bc33-26371d5dd62f",
+      "name": "Respuesta Error (401)"
+    },
+    {
+      "parameters": {
+        "path": "get-tickets",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        -96
+      ],
+      "id": "c823c9f4-a669-4a22-9eb9-a145d7a49682",
+      "name": "Webhook (Get Tickets)",
+      "webhookId": "get-tickets"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "tickets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -656,
+        -96
+      ],
+      "id": "3c5a8e9e-93d7-4087-b157-f210c8e10dd1",
+      "name": "Leer Tiques",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -96
+      ],
+      "id": "e2224419-6168-4d51-8a18-26444e9ab095",
+      "name": "Responder JSON",
+      "webhookId": "get-tickets"
+    },
+    {
+      "parameters": {
+        "path": "get-agents",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        64
+      ],
+      "id": "3b071003-6afc-4d0d-8770-4e79d4816fae",
+      "name": "Webhook (Get Agents)",
+      "webhookId": "get-tickets"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1826195672,
+          "mode": "list",
+          "cachedResultName": "agents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1826195672"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -656,
+        64
+      ],
+      "id": "904012b4-4930-40fe-8271-0048682f4886",
+      "name": "Leer Tiques1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "6fc6550c-f494-477a-aa31-1fbb2fe1c80f",
+      "name": "Responder JSON1",
+      "webhookId": "get-tickets"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst body = $('Webhook (Power Automate)').first().json.body;\n\n// Opción para reiniciar el contador si el webhook lo pide\nif (body && body.reset_id === true) {\n    staticData.currentId = body.start_from ? parseInt(body.start_from) - 1 : 0;\n}\n\nif (staticData.currentId === undefined) {\n    staticData.currentId = 1;\n} else {\n    staticData.currentId += 1;\n}\n\n// Formateamos con 3 ceros a la izquierda: TK-001, TK-002, etc.\nconst paddedId = String(staticData.currentId).padStart(3, '0');\nconst ticketId = `TK-${paddedId}`;\n\nreturn {\n    generated_ticket_id: ticketId,\n    sequential_number: staticData.currentId,\n    original_body: body\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        32
+      ],
+      "id": "a44837c9-72d9-4d25-8836-15918fa68a37",
+      "name": "Generar ID Tique"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM",
+          "mode": "list",
+          "cachedResultName": "Base de Datos - Mesa de Ayuda CCL - V1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1857388733,
+          "mode": "list",
+          "cachedResultName": "users",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16qOZEdOPXfSvP4eUYsa_ucTP1O_Kd_P3KQoaxKei2kM/edit#gid=1857388733"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        176,
+        -160
+      ],
+      "id": "b59cdd0e-bda2-400a-92e5-e323b80b20f3",
+      "name": "Leer Todos los Usuarios",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QNLJdRhNIJVqFHUd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet maxId = 0;\n\n// Validamos que realmente haya datos\nif (items && items.length > 0) {\n  for (const item of items) {\n    // Validamos que el item tenga el campo user_id\n    if (item.json && item.json.user_id) {\n      const uid = item.json.user_id;\n      if (typeof uid === 'string' && uid.startsWith('U-')) {\n        const num = parseInt(uid.replace('U-', ''), 10);\n        if (!isNaN(num) && num > maxId) {\n          maxId = num;\n        }\n      }\n    }\n  }\n}\n\n// Formateamos con 3 ceros a la izquierda: U-001, U-002, etc.\nconst nextId = `U-${String(maxId + 1).padStart(3, '0')}`;\n\nreturn {\n  json: {\n    generated_user_id: nextId\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -160
+      ],
+      "id": "20aeb157-a827-40f6-876d-b107bf852919",
+      "name": "Generar User ID",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Power Automate)": {
+      "main": [
+        [
+          {
+            "node": "Buscar si es Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar si es Agente": {
+      "main": [
+        [
+          {
+            "node": "Es Agente Activo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Agente Activo?": {
+      "main": [
+        [
+          {
+            "node": "Extraer ID del Asunto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer ID del Asunto": {
+      "main": [
+        [
+          {
+            "node": "Cerrar Tique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Es Usuario Nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Usuario Nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Leer Todos los Usuarios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generar ID Tique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Todos los Usuarios": {
+      "main": [
+        [
+          {
+            "node": "Generar User ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar User ID": {
+      "main": [
+        [
+          {
+            "node": "Registrar Usuario Nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Usuario Nuevo": {
+      "main": [
+        [
+          {
+            "node": "Generar ID Tique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar ID Tique": {
+      "main": [
+        [
+          {
+            "node": "Crear Tique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Tique": {
+      "main": [
+        [
+          {
+            "node": "Enviar Correo Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Auth)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Agente": {
+      "main": [
+        [
+          {
+            "node": "Existe el Usuario?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe el Usuario?": {
+      "main": [
+        [
+          {
+            "node": "Encriptar Contraseña",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Error (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Encriptar Contraseña": {
+      "main": [
+        [
+          {
+            "node": "Contraseña Correcta?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contraseña Correcta?": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Exitosa (200)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Error (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Get Tickets)": {
+      "main": [
+        [
+          {
+            "node": "Leer Tiques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Tiques": {
+      "main": [
+        [
+          {
+            "node": "Responder JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Get Agents)": {
+      "main": [
+        [
+          {
+            "node": "Leer Tiques1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Tiques1": {
+      "main": [
+        [
+          {
+            "node": "Responder JSON1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b4e12e8b-b76c-4545-9087-f06079c6fe2e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3029faee15332a4bcf4db7393088afe4a4e82910ea5b3cccc780455bcb775f1d"
+  },
+  "nodeGroups": [],
+  "id": "LBvnp0jjg2QEhMNR",
+  "tags": []
+}

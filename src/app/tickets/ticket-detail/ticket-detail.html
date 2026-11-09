@@ -1,0 +1,235 @@
+<p-drawer
+  [(visible)]="visible"
+  (onHide)="onCloseDrawer()"
+  position="right"
+  [style]="{ width: '1000px' }"
+  styleClass="ticket-detail-drawer"
+>
+  <!-- Header del Drawer -->
+  <ng-template #header>
+    <div class="detail-topbar">
+      <div class="topbar-meta" *ngIf="ticket">
+        <span class="topbar-id">#{{ ticket.ticket_id }}</span>
+        <p-tag
+          [value]="translatePriority(ticket.priority)"
+          [severity]="getPrioritySeverity(ticket.priority)"
+          styleClass="meta-tag"
+        />
+        <p-tag
+          [value]="translateStatus(ticket.status)"
+          [severity]="getStatusSeverity(ticket.status)"
+          styleClass="meta-tag"
+        />
+      </div>
+      <button class="btn-back" (click)="onCloseDrawer()" title="Cerrar">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Contenido -->
+  <div class="detail-page">
+    <ng-container *ngIf="loading">
+      <div class="page-loading">
+        <div class="spinner"></div>
+        <span>Cargando conversación...</span>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="error && !loading">
+      <div class="page-error">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>No se pudo cargar el detalle del tique.</span>
+        <button class="btn-retry" (click)="loadDetail()">
+          <i class="pi pi-refresh"></i> Reintentar
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && !error && ticket">
+      <div class="detail-layout">
+        <!-- Sidebar -->
+        <aside class="detail-sidebar">
+          <div class="sidebar-card">
+            <div class="card-section-title"><i class="pi pi-info-circle"></i> Información</div>
+            <div class="info-list">
+              <div class="info-row">
+                <span class="info-label">ID Tique</span>
+                <span class="info-val ticket-id-badge">#{{ ticket.ticket_id }}</span>
+              </div>
+
+              <!-- Editar Estado Modernizado -->
+              <div class="info-row">
+                <span class="info-label">Estado</span>
+                <div *ngIf="!isEditingStatus" class="info-val edit-trigger">
+                  <p-tag
+                    [value]="translateStatus(ticket.status)"
+                    [severity]="getStatusSeverity(ticket.status)"
+                    styleClass="meta-tag"
+                  />
+                  <i
+                    class="pi pi-pencil"
+                    (click)="isEditingStatus = true"
+                    title="Editar estado"
+                  ></i>
+                </div>
+                <div *ngIf="isEditingStatus" class="info-val edit-select">
+                  <p-select
+                    [options]="statusOptions"
+                    [(ngModel)]="editStatusValue"
+                    optionLabel="label"
+                    optionValue="value"
+                    appendTo="body"
+                    (onChange)="saveStatus()"
+                    size="small"
+                    styleClass="w-full"
+                  />
+                </div>
+              </div>
+
+              <!-- Editar Agente (NUEVO) -->
+              <div class="info-row">
+                <span class="info-label">Agente</span>
+                <div *ngIf="!isEditingAgent" class="info-val edit-trigger">
+                  <span class="agent-badge" [class.no-agent]="!ticket.assigned_agent">
+                    {{ ticket.assigned_agent || 'Sin asignar' }}
+                  </span>
+                  <i
+                    class="pi pi-user-edit"
+                    (click)="isEditingAgent = true"
+                    title="Asignar agente"
+                  ></i>
+                </div>
+                <div *ngIf="isEditingAgent" class="info-val edit-select">
+                  <p-select
+                    [options]="agentsList"
+                    [(ngModel)]="editAgentValue"
+                    optionLabel="full_name"
+                    optionValue="email"
+                    appendTo="body"
+                    (onChange)="saveAgent()"
+                    placeholder="Seleccionar..."
+                    size="small"
+                    styleClass="w-full"
+                    [filter]="true"
+                    filterBy="full_name,email"
+                  />
+                </div>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">Prioridad</span>
+                <p-tag
+                  [value]="translatePriority(ticket.priority)"
+                  [severity]="getPrioritySeverity(ticket.priority)"
+                  styleClass="meta-tag"
+                />
+              </div>
+              <div class="info-row">
+                <span class="info-label">Fecha</span>
+                <span class="info-val">{{ ticket.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-card">
+            <div class="card-section-title"><i class="pi pi-users"></i> Participantes</div>
+            <div class="participant">
+              <div class="p-avatar user-color">{{ getInitial(ticket.sender_email) }}</div>
+              <div class="p-meta">
+                <span class="p-name">{{ ticket.sender_email }}</span>
+                <span class="p-role">Usuario</span>
+              </div>
+            </div>
+            <div class="participant" *ngIf="ticket.assigned_agent">
+              <div class="p-avatar agent-color">{{ getInitial(ticket.assigned_agent) }}</div>
+              <div class="p-meta">
+                <span class="p-name">{{ ticket.assigned_agent }}</span>
+                <span class="p-role">Agente</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-card">
+            <div class="card-section-title"><i class="pi pi-tag"></i> Asunto</div>
+            <p class="subject-text">{{ ticket.subject }}</p>
+          </div>
+        </aside>
+
+        <!-- Columna de Mensajes -->
+        <div class="thread-column">
+          <div class="thread-header">
+            <i class="pi pi-comments"></i> Conversación
+            <span class="msg-count"
+              >{{ messages.length }} mensaje{{ messages.length !== 1 ? 's' : '' }}</span
+            >
+          </div>
+
+          <div class="thread-list">
+            <div
+              *ngFor="let msg of messages"
+              class="message-bubble"
+              [class.bubble-agent]="msg.isAgent"
+              [class.bubble-user]="!msg.isAgent"
+            >
+              <div class="bubble-header">
+                <div class="bubble-avatar" [class.av-agent]="msg.isAgent">
+                  {{ getInitial(msg.from) }}
+                </div>
+                <div class="bubble-meta">
+                  <span class="bubble-from">{{ msg.from }}</span>
+                  <span class="bubble-role">{{
+                    msg.isAgent ? 'Agente de soporte' : 'Usuario'
+                  }}</span>
+                </div>
+                <span class="bubble-date">{{ msg.date | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+
+              <div class="bubble-body">
+                <div
+                  *ngIf="msg.isHtml"
+                  class="msg-html"
+                  [innerHTML]="safeHtml(msg.cleanBody)"
+                ></div>
+                <div *ngIf="!msg.isHtml && msg.body" class="msg-plain">{{ msg.body }}</div>
+                <div *ngIf="!msg.body" class="msg-empty">
+                  <i class="pi pi-minus"></i> Sin contenido
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Caja de Respuesta -->
+          <div class="reply-box">
+            <textarea
+              pTextarea
+              [(ngModel)]="replyText"
+              rows="2"
+              placeholder="Escribe una respuesta al usuario..."
+              class="reply-textarea"
+              [autoResize]="true"
+            ></textarea>
+            <div class="reply-actions">
+              <p-button
+                label="Enviar"
+                icon="pi pi-send"
+                size="small"
+                [loading]="sendingReply"
+                [disabled]="!replyText.trim()"
+                (onClick)="sendReply()"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</p-drawer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" *ngIf="lightboxSrc" (click)="closeLightbox()">
+  <div class="lightbox-box" (click)="$event.stopPropagation()">
+    <button class="lightbox-close" (click)="closeLightbox()"><i class="pi pi-times"></i></button>
+    <img [src]="lightboxSrc" alt="imagen completa" />
+  </div>
+</div>

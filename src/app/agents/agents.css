@@ -1,0 +1,305 @@
+/* ================================================
+   AGENTS PAGE — Mismo diseño que Tickets
+   ================================================ */
+
+.agents-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page Header ── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.4px;
+}
+
+.page-subtitle {
+  font-size: 0.845rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 0.845rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn-refresh:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+.btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Table Card ── */
+.table-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* p-table overrides */
+:host ::ng-deep .agents-ptable {
+  font-family: 'Inter', sans-serif;
+}
+
+:host ::ng-deep .agents-ptable .p-datatable-header {
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0;
+}
+
+.table-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px 14px;
+  flex-wrap: wrap;
+}
+
+.caption-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.table-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.table-card-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.caption-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+:host ::ng-deep .btn-clear-table.p-button {
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+  background: #fff !important;
+  font-size: 0.82rem !important;
+  padding: 7px 14px !important;
+  border-radius: 9px !important;
+  font-family: inherit !important;
+  height: 36px;
+}
+:host ::ng-deep .btn-clear-table.p-button:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.search-input {
+  width: 250px !important;
+  height: 36px;
+  font-size: 0.82rem !important;
+  border-radius: 9px !important;
+}
+
+:host ::ng-deep .agents-ptable .p-datatable-thead > tr > th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: none;
+}
+
+.th-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+:host ::ng-deep .agents-ptable .p-datatable-tbody > tr {
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.12s;
+}
+:host ::ng-deep .agents-ptable .p-datatable-tbody > tr:hover {
+  background: #f0f7ff !important;
+}
+:host ::ng-deep .agents-ptable .p-datatable-tbody > tr > td {
+  padding: 12px 16px;
+  font-size: 0.845rem;
+  color: #475569;
+  border-bottom: none;
+  vertical-align: middle;
+}
+
+:host ::ng-deep .agents-ptable .p-paginator {
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+}
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-page.p-highlight {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  border-color: #2563eb;
+}
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-page,
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-next,
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-prev,
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-first,
+:host ::ng-deep .agents-ptable .p-paginator .p-paginator-last {
+  border-radius: 8px;
+  min-width: 32px;
+  height: 32px;
+  font-size: 0.82rem;
+}
+
+/* Cell styles */
+.agent-id {
+  font-family: 'Courier New', monospace;
+  font-size: 0.77rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.user-av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0e7ff, #ddd6fe);
+  color: #4f46e5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.agent-av {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+.user-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.agent-email {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+.agent-role {
+  background: #f8fafc;
+  color: #475569;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+}
+
+:host ::ng-deep .status-tag {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 52px 0;
+  color: #cbd5e1;
+}
+.empty-state i {
+  font-size: 2.5rem;
+}
+.empty-state span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .table-caption {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .caption-right {
+    width: 100%;
+  }
+  .search-input {
+    width: 100% !important;
+  }
+}

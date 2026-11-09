@@ -1,0 +1,206 @@
+<div class="tickets-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Tickets</h1>
+      <p class="page-subtitle">Gestión y seguimiento de todos los tickets de soporte</p>
+    </div>
+    <button class="btn-refresh" (click)="loadTickets()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.spinning]="loading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <p-table
+      #dt
+      [value]="tickets"
+      dataKey="ticket_id"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      [paginator]="true"
+      [globalFilterFields]="[
+        'ticket_id',
+        'subject',
+        'sender_email',
+        'assigned_agent',
+        'status',
+        'priority',
+      ]"
+      styleClass="tickets-ptable"
+      rowHover="true"
+    >
+      <!-- Caption -->
+      <ng-template #caption>
+        <div class="table-caption">
+          <div class="caption-left">
+            <h2 class="table-card-title">Listado de Tickets</h2>
+            <p class="table-card-desc">{{ tickets.length }} registros en total</p>
+          </div>
+          <div class="caption-right">
+            <p-button
+              label="Limpiar filtros"
+              icon="pi pi-filter-slash"
+              [outlined]="true"
+              size="small"
+              (onClick)="clearFilters()"
+              styleClass="btn-clear-table"
+            />
+            <p-iconfield>
+              <p-inputicon><i class="pi pi-search"></i></p-inputicon>
+              <input
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($event)"
+                placeholder="Buscar tique, asunto, email..."
+                class="search-input"
+              />
+            </p-iconfield>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Header -->
+      <ng-template #header>
+        <tr>
+          <th style="width: 52px"></th>
+          <th style="min-width: 155px">
+            <div class="th-cell">
+              ID Tique <p-columnFilter type="text" field="ticket_id" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 230px">
+            <div class="th-cell">
+              Asunto <p-columnFilter type="text" field="subject" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 195px">
+            <div class="th-cell">
+              Remitente <p-columnFilter type="text" field="sender_email" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 175px">
+            <div class="th-cell">
+              Agente Asignado <p-columnFilter type="text" field="assigned_agent" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 155px">
+            <div class="th-cell">
+              Fecha <p-columnFilter type="date" field="created_at" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 135px">
+            <div class="th-cell">
+              Prioridad
+              <p-columnFilter field="priority" matchMode="equals" display="menu">
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-select
+                    [ngModel]="value"
+                    [options]="priorityOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccionar"
+                    (ngModelChange)="filter($event)"
+                    class="w-full"
+                  />
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th style="min-width: 125px">
+            <div class="th-cell">
+              Estado
+              <p-columnFilter field="status" matchMode="equals" display="menu">
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-select
+                    [ngModel]="value"
+                    [options]="statusOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccionar"
+                    (ngModelChange)="filter($event)"
+                    class="w-full"
+                  />
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <!-- Body -->
+      <ng-template #body let-ticket>
+        <tr class="ticket-row" (click)="openTicket(ticket)">
+          <td class="td-open" (click)="$event.stopPropagation(); openTicket(ticket)">
+            <button class="btn-open-ticket" type="button" title="Ver conversación">
+              <i class="pi pi-eye"></i>
+            </button>
+          </td>
+          <td>
+            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+          </td>
+          <td>
+            <span class="ticket-subject">{{ ticket.subject }}</span>
+          </td>
+          <td>
+            <div class="user-cell">
+              <div class="user-av">{{ ticket.sender_email?.charAt(0)?.toUpperCase() }}</div>
+              <span class="user-email">{{ ticket.sender_email }}</span>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="ticket.assigned_agent; else noAgent" class="user-cell">
+              <div class="user-av agent-av">
+                {{ ticket.assigned_agent.charAt(0).toUpperCase() }}
+              </div>
+              <span class="user-email">{{ ticket.assigned_agent }}</span>
+            </div>
+            <ng-template #noAgent>
+              <span class="unassigned"><i class="pi pi-minus-circle"></i> Sin asignar</span>
+            </ng-template>
+          </td>
+          <td>
+            <span class="date-text">{{ ticket.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="translatePriority(ticket.priority)"
+              [severity]="getPrioritySeverity(ticket.priority)"
+              styleClass="priority-tag"
+            />
+          </td>
+          <td>
+            <p-tag
+              [value]="translateStatus(ticket.status)"
+              [severity]="getStatusSeverity(ticket.status)"
+              styleClass="status-tag"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty -->
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <span>No se encontraron tickets con los filtros aplicados.</span>
+              <button class="btn-link" (click)="clearFilters()">Limpiar filtros</button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- COMPONENTE DEL DRAWER -->
+<app-ticket-detail
+  [(visible)]="drawerVisible"
+  [ticketId]="selectedTicketId"
+  (close)="closeDrawer()"
+>
+</app-ticket-detail>

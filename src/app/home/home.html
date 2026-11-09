@@ -1,0 +1,422 @@
+<div class="home-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Resumen general del sistema de soporte</p>
+    </div>
+    <button class="btn-refresh" (click)="loadTickets()" [disabled]="loading">
+      <i class="pi pi-refresh" [class.spinning]="loading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-card-blue">
+      <div class="kpi-left">
+        <span class="kpi-label">Total Tickets</span>
+        <span class="kpi-value">{{ totalTickets }}</span>
+        <span class="kpi-badge kpi-badge-blue">Este mes</span>
+      </div>
+      <div class="kpi-icon kpi-icon-blue"><i class="pi pi-ticket"></i></div>
+    </div>
+
+    <div class="kpi-card kpi-card-indigo">
+      <div class="kpi-left">
+        <span class="kpi-label">Abiertos</span>
+        <span class="kpi-value">{{ openTickets }}</span>
+        <span class="kpi-badge kpi-badge-indigo">En curso</span>
+      </div>
+      <div class="kpi-icon kpi-icon-indigo"><i class="pi pi-inbox"></i></div>
+    </div>
+
+    <div class="kpi-card kpi-card-green">
+      <div class="kpi-left">
+        <span class="kpi-label">Cerrados</span>
+        <span class="kpi-value">{{ closedTickets }}</span>
+        <span class="kpi-badge kpi-badge-green">Resueltos</span>
+      </div>
+      <div class="kpi-icon kpi-icon-green"><i class="pi pi-check-circle"></i></div>
+    </div>
+
+    <div class="kpi-card kpi-card-purple">
+      <div class="kpi-left">
+        <span class="kpi-label">SLA Promedio</span>
+        <span class="kpi-value">{{ slaAverage }}</span>
+        <span class="kpi-badge kpi-badge-purple">Tiempo resp.</span>
+      </div>
+      <div class="kpi-icon kpi-icon-purple"><i class="pi pi-stopwatch"></i></div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <!-- Donut estados: Abierto / Cerrado -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Estado de Tickets</h3>
+        <p class="chart-subtitle">Distribución actual por estado</p>
+      </div>
+      <div class="chart-body">
+        <canvas #statusChart></canvas>
+      </div>
+    </div>
+
+    <!-- Barras prioridad -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Prioridades</h3>
+        <p class="chart-subtitle">Tickets por nivel de prioridad</p>
+      </div>
+      <div class="chart-body">
+        <canvas #priorityChart></canvas>
+      </div>
+    </div>
+
+    <!-- Línea tendencia -->
+    <div class="chart-card chart-card-wide">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Tendencia de Tickets</h3>
+        <p class="chart-subtitle">Registros mensuales · {{ currentYear }}</p>
+      </div>
+      <div class="chart-body chart-body-line">
+        <canvas #trendChart></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TABLA — mismo diseño que /tickets
+       Filtrada: solo estado "Abierto"
+  ═══════════════════════════════════════════════ -->
+  <div class="table-card">
+    <p-table
+      #dt
+      [value]="openTicketsList"
+      dataKey="ticket_id"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      [paginator]="true"
+      [globalFilterFields]="[
+        'ticket_id',
+        'subject',
+        'sender_email',
+        'assigned_agent',
+        'status',
+        'priority',
+      ]"
+      [showGridlines]="false"
+      styleClass="tickets-ptable"
+      rowHover="true"
+      (onFilter)="onTableFilter($event)"
+    >
+      <!-- Caption -->
+      <ng-template #caption>
+        <div class="table-caption">
+          <div class="caption-left">
+            <h2 class="table-card-title">Tickets Abiertos</h2>
+            <p class="table-card-desc">
+              {{ visibleOpenCount }} de {{ openTicketsList.length }} tique{{
+                openTicketsList.length !== 1 ? 's' : ''
+              }}
+              abierto{{ openTicketsList.length !== 1 ? 's' : '' }}
+            </p>
+          </div>
+          <div class="caption-right">
+            <p-button
+              label="Limpiar filtros"
+              icon="pi pi-filter-slash"
+              [outlined]="true"
+              size="small"
+              (onClick)="clearFilters()"
+              styleClass="btn-clear-table"
+            />
+            <p-iconfield>
+              <p-inputicon><i class="pi pi-search"></i></p-inputicon>
+              <input
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($event)"
+                placeholder="Buscar tique, asunto, email..."
+                class="search-input"
+              />
+            </p-iconfield>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Header -->
+      <ng-template #header>
+        <tr>
+          <th style="width: 52px"></th>
+          <th style="min-width: 155px">
+            <div class="th-cell">
+              ID Tique <p-columnFilter type="text" field="ticket_id" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 230px">
+            <div class="th-cell">
+              Asunto <p-columnFilter type="text" field="subject" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 195px">
+            <div class="th-cell">
+              Remitente <p-columnFilter type="text" field="sender_email" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 175px">
+            <div class="th-cell">
+              Agente Asignado <p-columnFilter type="text" field="assigned_agent" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 155px">
+            <div class="th-cell">
+              Fecha <p-columnFilter type="date" field="created_at" display="menu" />
+            </div>
+          </th>
+          <th style="min-width: 135px">
+            <div class="th-cell">
+              Prioridad
+              <p-columnFilter field="priority" matchMode="equals" display="menu">
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-select
+                    [ngModel]="value"
+                    [options]="priorityOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccionar"
+                    (ngModelChange)="filter($event)"
+                    class="w-full"
+                  />
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th style="min-width: 125px">
+            <div class="th-cell">
+              Estado
+              <p-columnFilter field="status" matchMode="equals" display="menu">
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-select
+                    [ngModel]="value"
+                    [options]="statusOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccionar"
+                    (ngModelChange)="filter($event)"
+                    class="w-full"
+                  />
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <!-- Body -->
+      <ng-template #body let-ticket>
+        <tr class="ticket-row" (click)="openTicket(ticket)">
+          <td class="td-open" (click)="$event.stopPropagation(); openTicket(ticket)">
+            <button class="btn-open-ticket" type="button" title="Ver conversación">
+              <i class="pi pi-eye"></i>
+            </button>
+          </td>
+          <td>
+            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+          </td>
+          <td>
+            <span class="ticket-subject">{{ ticket.subject }}</span>
+          </td>
+          <td>
+            <div class="user-cell">
+              <div class="user-av">{{ initial(ticket.sender_email) }}</div>
+              <span class="user-email">{{ ticket.sender_email }}</span>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="ticket.assigned_agent; else noAgent" class="user-cell">
+              <div class="user-av agent-av">{{ initial(ticket.assigned_agent) }}</div>
+              <span class="user-email">{{ ticket.assigned_agent }}</span>
+            </div>
+            <ng-template #noAgent>
+              <span class="unassigned"><i class="pi pi-minus-circle"></i> Sin asignar</span>
+            </ng-template>
+          </td>
+          <td>
+            <span class="date-text">{{ ticket.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="translatePriority(ticket.priority)"
+              [severity]="getPrioritySeverity(ticket.priority)"
+              styleClass="priority-tag"
+            />
+          </td>
+          <td>
+            <p-tag
+              [value]="translateStatus(ticket.status)"
+              [severity]="getStatusSeverity(ticket.status)"
+              styleClass="status-tag"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty -->
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="pi pi-check-circle"></i>
+              <span>¡Todo al día! No hay Tickets abiertos que coincidan con los filtros.</span>
+              <button class="btn-link" (click)="clearFilters()">Limpiar filtros</button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     DRAWER — Conversación del tique
+═══════════════════════════════════ -->
+<p-drawer
+  [(visible)]="drawerVisible"
+  position="right"
+  [style]="{ width: '620px' }"
+  styleClass="ticket-drawer"
+  (onHide)="closeDrawer()"
+>
+  <!-- Header -->
+  <ng-template #header>
+    <div class="dw-header" *ngIf="selectedTicket">
+      <div class="dw-header-left">
+        <span class="dw-id">#{{ selectedTicket.ticket_id }}</span>
+        <span class="dw-subject">{{ selectedTicket.subject }}</span>
+      </div>
+      <div class="dw-tags">
+        <p-tag
+          [value]="translatePriority(selectedTicket.priority)"
+          [severity]="getPrioritySeverity(selectedTicket.priority)"
+          styleClass="meta-tag"
+        />
+        <p-tag
+          [value]="translateStatus(selectedTicket.status)"
+          [severity]="getStatusSeverity(selectedTicket.status)"
+          styleClass="meta-tag"
+        />
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Body -->
+  <div class="dw-body" *ngIf="selectedTicket">
+    <!-- Meta row -->
+    <div class="dw-meta-row">
+      <div class="dw-meta-item">
+        <i class="pi pi-envelope"></i>
+        <span>{{ selectedTicket.sender_email }}</span>
+      </div>
+      <div class="dw-meta-item" *ngIf="selectedTicket.assigned_agent">
+        <i class="pi pi-user"></i>
+        <span>{{ selectedTicket.assigned_agent }}</span>
+      </div>
+      <div class="dw-meta-item">
+        <i class="pi pi-calendar"></i>
+        <span>{{ selectedTicket.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <div class="dw-meta-item" *ngIf="selectedTicket.closed_at">
+        <i class="pi pi-check-circle" style="color: #16a34a"></i>
+        <span>Cerrado: {{ selectedTicket.closed_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+    </div>
+
+    <!-- Thread -->
+    <div class="thread">
+      <div class="thread-label">
+        <i class="pi pi-comments"></i>
+        Conversación · {{ messages.length }} mensaje{{ messages.length !== 1 ? 's' : '' }}
+      </div>
+
+      <div class="thread-empty" *ngIf="messages.length === 0">
+        <i class="pi pi-info-circle"></i> No hay mensajes disponibles.
+      </div>
+
+      <!-- Burbujas -->
+      <div *ngFor="let msg of messages" class="bubble" [class.bubble-agent]="msg.isAgent">
+        <!-- Etiqueta "Solución" para el agente -->
+        <div class="resolution-badge" *ngIf="msg.isAgent">
+          <i class="pi pi-check-circle"></i> Solución / Respuesta del agente
+        </div>
+
+        <!-- Header burbuja -->
+        <div class="bubble-top">
+          <div class="bav" [class.bav-agent]="msg.isAgent">{{ initial(msg.from) }}</div>
+          <div class="binfo">
+            <span class="bfrom">{{ msg.from }}</span>
+            <span class="brole">{{ msg.isAgent ? 'Agente de soporte' : 'Usuario' }}</span>
+          </div>
+          <span class="bdate">{{ msg.date | date: 'dd/MM/yy HH:mm' }}</span>
+        </div>
+
+        <!-- Cuerpo -->
+        <div class="bubble-body">
+          <div *ngIf="isHtml(msg.body)" class="msg-html" [innerHTML]="safeHtml(msg.body)"></div>
+          <div *ngIf="!isHtml(msg.body) && msg.body" class="msg-plain">{{ msg.body }}</div>
+          <div *ngIf="!msg.body" class="msg-empty"><i class="pi pi-minus"></i> Sin contenido</div>
+        </div>
+
+        <!-- Imágenes del HTML -->
+        <div class="img-gallery" *ngIf="isHtml(msg.body) && extractImages(msg.body).length > 0">
+          <span class="gallery-label"><i class="pi pi-images"></i> Imágenes adjuntas</span>
+          <div class="gallery-row">
+            <div
+              *ngFor="let src of extractImages(msg.body)"
+              class="thumb"
+              (click)="openLightbox(src)"
+            >
+              <img [src]="src" alt="imagen" loading="lazy" />
+              <div class="thumb-hover"><i class="pi pi-search-plus"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Archivos adjuntos -->
+        <div class="attachments" *ngIf="msg.attachments.length > 0">
+          <span class="gallery-label"><i class="pi pi-paperclip"></i> Archivos adjuntos</span>
+          <div class="gallery-row">
+            <ng-container *ngFor="let att of msg.attachments">
+              <div *ngIf="att.isImage" class="thumb" (click)="openLightbox(att.url)">
+                <img [src]="att.url" [alt]="att.name" loading="lazy" />
+                <div class="thumb-hover"><i class="pi pi-search-plus"></i></div>
+              </div>
+              <a
+                *ngIf="!att.isImage"
+                [href]="att.url"
+                target="_blank"
+                rel="noopener"
+                class="file-chip"
+              >
+                <i class="pi pi-file"></i><span>{{ att.name }}</span>
+              </a>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+      <!-- /bubble -->
+    </div>
+    <!-- /thread -->
+  </div>
+  <!-- /dw-body -->
+</p-drawer>
+
+<!-- ═══════════════ LIGHTBOX ═══════════════ -->
+<div class="lightbox" *ngIf="lightboxSrc" (click)="closeLightbox()">
+  <div class="lb-box" (click)="$event.stopPropagation()">
+    <button class="lb-close" (click)="closeLightbox()"><i class="pi pi-times"></i></button>
+    <img [src]="lightboxSrc" alt="imagen completa" />
+  </div>
+</div>
