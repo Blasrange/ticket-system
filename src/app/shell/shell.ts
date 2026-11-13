@@ -1,56 +1,78 @@
-import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  PLATFORM_ID,
+  ViewChild,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../core/services/auth';
+import { NotificationService, AppNotification } from '../core/services/notification';
 import { filter } from 'rxjs/operators';
+
+import { PopoverModule, Popover } from '@openng/optimus-ui/popover';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, PopoverModule],
   templateUrl: './shell.html',
-  styleUrl: './shell.css'
+  styleUrl: './shell.css',
 })
-export class Shell {
+export class Shell implements OnInit, OnDestroy {
   private authService = inject(AuthService);
-  private router       = inject(Router);
-  private platformId   = inject(PLATFORM_ID);
+  private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
+  private notifService = inject(NotificationService);
 
-  // ── Sidebar collapsed state persisted in localStorage ──
+  @ViewChild('notifPanel') notifPanel!: Popover;
+
   collapsed = signal<boolean>(this.loadCollapsed());
-
-  // ── Current page title for topbar breadcrumb ──
   pageTitle = signal<string>('Dashboard');
 
+  notifications = this.notifService.notifications;
+  unreadCount = this.notifService.unreadCount;
+  dangerCount = this.notifService.dangerCount;
+  warningCount = this.notifService.warningCount;
+
   private readonly PAGE_LABELS: Record<string, string> = {
-    '/home':     'Dashboard',
-    '/tickets':  'Tickets',
-    '/agents':   'Agentes',
-    '/reports':  'Reportes',
-    '/settings': 'Configuración',
+    '/home': 'Dashboard',
+    '/tickets': 'Tickets',
+    '/agents': 'Agentes',
+    '/kanban-board': 'Tablero Kanban',
+    // '/settings': 'Configuración',
   };
 
   constructor() {
-    // Actualiza el breadcrumb al cambiar de ruta
-    this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        const url = e.urlAfterRedirects as string;
-        // Detecta rutas de detalle como /tickets/TK-xxx
-        if (url.match(/^\/tickets\/.+/)) {
-          this.pageTitle.set('Detalle del Tique');
-        } else {
-          const label = this.PAGE_LABELS[url] ?? 'Dashboard';
-          this.pageTitle.set(label);
-        }
-      });
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e: any) => {
+      const url = e.urlAfterRedirects as string;
+      if (url.match(/^\/tickets\/.+/)) {
+        this.pageTitle.set('Detalle del Ticket');
+      } else {
+        this.pageTitle.set(this.PAGE_LABELS[url] ?? 'Dashboard');
+      }
+    });
   }
 
-  // 👇 AHORA ES SÚPER LIMPIO (El auth.ts ya hace la magia)
+  ngOnInit() {
+    this.notifService.startPolling();
+  }
+
+  ngOnDestroy() {
+    this.notifService.stopPolling();
+  }
+
+  // ── GETTERS DE USUARIO ──
   get userName(): string {
-    const user = this.authService.getUser();
-    return user?.name || 'Usuario';
+    return this.authService.getUser()?.full_name || 'Usuario';
+  }
+
+  get userRole(): string {
+    return this.authService.getUser()?.role || 'Agente';
   }
 
   get userInitial(): string {
@@ -68,6 +90,40 @@ export class Shell {
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  // ── NOTIFICACIONES ──
+  toggleNotifications(event: any) {
+    this.notifService.refresh();
+    this.notifPanel.toggle(event);
+  }
+
+  onNotifClick(n: AppNotification) {
+    this.notifService.markAsRead(n.id);
+    this.notifPanel.hide();
+    this.router.navigate(['/tickets'], { queryParams: { open: n.ticketId } });
+  }
+
+  markAllAsRead() {
+    this.notifService.markAllAsRead();
+  }
+
+  goToTickets() {
+    this.notifPanel.hide();
+    this.router.navigate(['/tickets']);
+  }
+
+  trackById = (_: number, n: AppNotification) => n.id;
+
+  getNotifIcon(type: string): string {
+    switch (type) {
+      case 'danger':
+        return 'pi-exclamation-circle';
+      case 'warning':
+        return 'pi-exclamation-triangle';
+      default:
+        return 'pi-info-circle';
+    }
   }
 
   private loadCollapsed(): boolean {

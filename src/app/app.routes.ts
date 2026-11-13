@@ -4,20 +4,15 @@ import { authGuard } from './core/guards/auth-guard';
 import { Shell } from './shell/shell';
 
 export const routes: Routes = [
-  // Ruta por defecto → login
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
   },
-
-  // Login sin layout
   {
     path: 'login',
     component: Login
   },
-
-  // Rutas autenticadas — el Shell actúa como layout
   {
     path: '',
     component: Shell,
@@ -38,12 +33,13 @@ export const routes: Routes = [
       {
         path: 'agents',
         loadComponent: () => import('./agents/agents').then(m => m.Agents)
-      }
-      // Aquí irán las demás rutas protegidas (agents, reports, settings)
-      
+      },
+      {
+        path: 'kanban-board',
+        loadComponent: () => import('./kanban-board/kanban-board').then(m => m.KanbanBoard)
+      },
     ]
   },
-  // Comodín
   {
     path: '**',
     redirectTo: 'login'

@@ -6,8 +6,12 @@
         <i class="pi pi-headphones"></i>
       </div>
       <div class="brand-text">
-        <span class="brand-name">Mesa WMS</span>
-        <span class="brand-sub">Mesa de ayuda</span>
+        <span class="brand-name">
+          Mesa Apliaciones
+        </span>        
+        <span class="brand-sub">
+          Mesa de ayuda
+        </span>
       </div>
     </div>
 
@@ -24,6 +28,16 @@
         <span>Tickets</span>
       </a>
 
+      <a
+        class="nav-item"
+        routerLink="/kanban-board"
+        routerLinkActive="active"
+        title="Tablero Kanban"
+      >
+        <span class="nav-icon"><i class="pi pi-th-large"></i></span>
+        <span>Tablero Kanban</span>
+      </a>
+
       <span class="nav-group-label">Administración</span>
 
       <a class="nav-item" routerLink="/agents" routerLinkActive="active" title="Agentes">
@@ -31,28 +45,21 @@
         <span>Agentes</span>
       </a>
 
-      <a class="nav-item" routerLink="/reports" routerLinkActive="active" title="Reportes">
-        <span class="nav-icon"><i class="pi pi-chart-bar"></i></span>
-        <span>Reportes</span>
-      </a>
-
-      <a class="nav-item" routerLink="/settings" routerLinkActive="active" title="Configuración">
+      <!-- <a class="nav-item" routerLink="/settings" routerLinkActive="active" title="Configuración">
         <span class="nav-icon"><i class="pi pi-cog"></i></span>
         <span>Configuración</span>
-      </a>
+      </a> -->
     </nav>
 
+    <!-- USER INFO EN LA PARTE DE ABAJO -->
     <div class="sidebar-footer">
       <div class="user-info" [title]="userName">
         <div class="user-avatar">{{ userInitial }}</div>
         <div class="user-meta">
           <span class="user-name">{{ userName }}</span>
-          <span class="user-role">Agente</span>
+          <span class="user-role">{{ userRole }}</span>
         </div>
       </div>
-      <button class="logout-btn" (click)="logout()" title="Cerrar sesión">
-        <i class="pi pi-sign-out"></i>
-      </button>
     </div>
   </aside>
 
@@ -61,7 +68,6 @@
     <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-breadcrumb">
-        <!-- Botón toggle sidebar -->
         <button
           class="toggle-sidebar-btn"
           (click)="toggleSidebar()"
@@ -73,16 +79,87 @@
         <span class="breadcrumb-sep">/</span>
         <span class="breadcrumb-current">{{ pageTitle() }}</span>
       </div>
+
       <div class="topbar-actions">
-        <button class="topbar-icon-btn" title="Notificaciones">
+        <!-- BOTÓN DE NOTIFICACIONES -->
+        <button
+          class="topbar-icon-btn"
+          (click)="toggleNotifications($event)"
+          aria-label="Notificaciones"
+        >
           <i class="pi pi-bell"></i>
-          <span class="notif-dot"></span>
+          <span class="notif-dot" *ngIf="unreadCount() > 0">
+            {{ unreadCount() > 9 ? '9+' : unreadCount() }}
+          </span>
         </button>
-        <div class="topbar-user">
-          <div class="topbar-avatar">{{ userInitial }}</div>
-          <span class="topbar-username">{{ userName }}</span>
-          <i class="pi pi-angle-down" style="font-size: 0.75rem; color: #94a3b8"></i>
-        </div>
+
+        <!-- PANEL DE NOTIFICACIONES -->
+        <p-popover #notifPanel styleClass="premium-notif-panel">
+          <div class="notif-header">
+            <div class="notif-title-wrap">
+              <h3>Notificaciones</h3>
+              <span class="notif-badge" *ngIf="unreadCount() > 0">
+                {{ unreadCount() }} nuevas
+              </span>
+            </div>
+            <button class="mark-read-btn" (click)="markAllAsRead()" *ngIf="unreadCount() > 0">
+              Marcar todas
+            </button>
+          </div>
+
+          <div class="notif-legend" *ngIf="unreadCount() > 0">
+            <span class="legend-pill danger" *ngIf="dangerCount() > 0">
+              <i class="pi pi-exclamation-circle"></i> {{ dangerCount() }} vencidos
+            </span>
+            <span class="legend-pill warning" *ngIf="warningCount() > 0">
+              <i class="pi pi-exclamation-triangle"></i> {{ warningCount() }} por vencer
+            </span>
+          </div>
+
+          <div class="notif-list">
+            <div
+              class="notif-item"
+              *ngFor="let n of notifications(); trackBy: trackById"
+              [class.unread]="!n.read"
+              [class.is-danger]="n.type === 'danger'"
+              [class.is-warning]="n.type === 'warning'"
+              (click)="onNotifClick(n)"
+            >
+              <div class="notif-icon-wrap" [ngClass]="'notif-icon-' + n.type">
+                <i class="pi" [ngClass]="getNotifIcon(n.type)"></i>
+              </div>
+
+              <div class="notif-content">
+                <div class="notif-content-top">
+                  <span class="notif-title">{{ n.title }}</span>
+                  <span class="notif-time" [ngClass]="'time-' + n.type">{{ n.time }}</span>
+                </div>
+                <span class="notif-message">{{ n.message }}</span>
+              </div>
+
+              <span class="unread-indicator" *ngIf="!n.read"></span>
+            </div>
+
+            <div class="notif-empty" *ngIf="notifications().length === 0">
+              <div class="empty-icon"><i class="pi pi-bell-slash"></i></div>
+              <span class="empty-title">Todo en orden</span>
+              <span class="empty-sub">No tienes notificaciones pendientes</span>
+            </div>
+          </div>
+
+          <div class="notif-footer" *ngIf="notifications().length > 0">
+            <button class="view-all-btn" (click)="goToTickets()">
+              <i class="pi pi-arrow-right"></i> Ver todos los tickets
+            </button>
+          </div>
+        </p-popover>
+
+        <div class="topbar-divider"></div>
+
+        <!-- BOTÓN DE SALIR MODERNO (Reemplaza el menú de perfil) -->
+        <button class="logout-topbar-btn" (click)="logout()" title="Cerrar sesión">
+          <i class="pi pi-power-off"></i>
+        </button>
       </div>
     </header>
 

@@ -15,12 +15,10 @@ export class AuthService {
       map((res: any) => {
         let data = res;
         
-        // 1. Si n8n envía un arreglo [{...}], sacamos el primer elemento
         if (Array.isArray(data) && data.length > 0) {
           data = data[0];
         }
         
-        // 2. Si n8n envía { json: {...} }, lo extraemos
         if (data && typeof data === 'object' && 'json' in data) {
           data = data.json;
         }
@@ -29,17 +27,23 @@ export class AuthService {
           throw new Error('No se recibieron datos del servidor.');
         }
 
-        // 3. Extraemos el usuario o creamos uno por defecto
-        const user = data.user || {
-          name: credentials.email.split('@')[0],
-          email: credentials.email,
-          role: 'Agente'
-        };
+        const user = data.user || data; 
+
+        // 👇 VALIDACIÓN ROBUSTA DE ESTADO ACTIVO (Soporta true, "true", 1, "1")
+        const activeString = String(user.is_active).toLowerCase();
+        const isActive = ['true', '1', 'activo'].includes(activeString);
+
+        // Si el campo existe y no es activo, bloqueamos
+        if (user.is_active !== undefined && user.is_active !== null && !isActive) {
+          throw new Error('Tu cuenta está inactiva. Por favor, contacta al administrador.');
+        }
 
         return {
-          ...user,
-          name: user.name || credentials.email.split('@')[0],
+          agent_id: user.agent_id,
+          name: user.full_name || user.name || credentials.email.split('@')[0],
+          full_name: user.full_name || user.name || credentials.email.split('@')[0],
           email: user.email || credentials.email,
+          role: user.role || 'Agente',
           token: data.token || 'token-local'
         };
       }),
@@ -56,6 +60,7 @@ export class AuthService {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('ccl_token');
       localStorage.removeItem('ccl_user');
+      localStorage.removeItem('currentUser');
     }
   }
 
@@ -69,6 +74,10 @@ export class AuthService {
     const raw = localStorage.getItem('ccl_user');
     if (!raw) return null;
     const user = JSON.parse(raw);
-    return { ...user, name: user.name || user.full_name || 'Usuario' };
+    return { 
+      ...user, 
+      name: user.full_name || user.name || 'Usuario',
+      role: user.role || 'Agente'
+    };
   }
 }

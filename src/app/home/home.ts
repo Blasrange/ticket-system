@@ -36,21 +36,16 @@ export interface Message {
   attachments: { name: string; url: string; isImage: boolean }[];
 }
 
-/* ==========================================================
-   Plugin: texto central del donut
-   ========================================================== */
 const centerTextPlugin: Plugin<'doughnut'> = {
   id: 'centerText',
   beforeDraw(chart: any) {
     const { ctx, chartArea, width, height } = chart;
     if (!chartArea || !ctx) return;
-
     const raw = chart.data?.datasets?.[0]?.data;
     const values = Array.isArray(raw) ? (raw as number[]) : [];
     const total = values.reduce((acc: number, val) => acc + (Number(val) || 0), 0);
 
     ctx.save();
-
     ctx.font = '800 26px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#0f172a';
     ctx.textBaseline = 'middle';
@@ -60,7 +55,6 @@ const centerTextPlugin: Plugin<'doughnut'> = {
     ctx.font = '600 10px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#94a3b8';
     ctx.fillText('TOTAL', width / 2, height / 2 + 16);
-
     ctx.restore();
   },
 };
@@ -104,33 +98,32 @@ export class Home implements OnInit, OnDestroy {
   loading = true;
 
   totalTickets = 0;
-  openTickets = 0;
+  activeTickets = 0;
   closedTickets = 0;
 
-  // ── Tabla: lista estable (NO usar getter, rompe el filtro del p-table) ──
-  openTicketsList: any[] = [];
-  visibleOpenCount = 0;
+  // ── Tabla ──
+  activeTicketsList: any[] = [];
+  visibleActiveCount = 0;
 
   // ── Drawer ──
   drawerVisible = false;
   selectedTicket: any = null;
   messages: Message[] = [];
-  loadingMessages = false;
-
-  // ── Lightbox ──
   lightboxSrc: string | null = null;
 
   // ── Filtros ──
   statusOptions = [
     { label: 'Abierto', value: 'Open' },
-    { label: 'Pendiente', value: 'Pending' },
+    { label: 'Asignado', value: 'Assigned' },
+    { label: 'En Proceso', value: 'In progress' },
     { label: 'Cerrado', value: 'Closed' },
   ];
   priorityOptions = [
-    { label: 'Crítica', value: 'Critical' },
-    { label: 'Alta', value: 'High' },
-    { label: 'Media', value: 'Medium' },
-    { label: 'Baja', value: 'Low' },
+    { label: 'Crítica', value: 'P1' },
+    { label: 'Alta', value: 'P2' },
+    { label: 'Media', value: 'P3' },
+    { label: 'Baja', value: 'P4' },
+    { label: 'Servicio', value: 'Solicitud' },
   ];
 
   ngOnInit(): void {
@@ -155,12 +148,15 @@ export class Home implements OnInit, OnDestroy {
 
           this.tickets = dataArray.map((item: any) => item.json ?? item);
 
-          // 👇 Lista estable (una sola vez, no en cada CD)
-          this.openTicketsList = this.tickets.filter((t: any) => t.status === 'Open');
-          this.visibleOpenCount = this.openTicketsList.length;
+          // Filtramos estados activos: Open, Assigned, In progress
+          const activeStatuses = ['Open', 'Assigned', 'In progress'];
+          this.activeTicketsList = this.tickets.filter((t: any) =>
+            activeStatuses.includes(t.status),
+          );
 
+          this.visibleActiveCount = this.activeTicketsList.length;
           this.totalTickets = this.tickets.length;
-          this.openTickets = this.openTicketsList.length;
+          this.activeTickets = this.activeTicketsList.length;
           this.closedTickets = this.tickets.filter((t: any) => t.status === 'Closed').length;
         } catch (err) {
           console.error('Error procesando datos:', err);
@@ -173,11 +169,8 @@ export class Home implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error cargando Tickets:', err);
         this.tickets = [];
-        this.openTicketsList = [];
-        this.visibleOpenCount = 0;
-        this.totalTickets = 0;
-        this.openTickets = 0;
-        this.closedTickets = 0;
+        this.activeTicketsList = [];
+        this.visibleActiveCount = 0;
         this.loading = false;
         this.cdr.detectChanges();
         setTimeout(() => this.buildCharts());
@@ -185,16 +178,14 @@ export class Home implements OnInit, OnDestroy {
     });
   }
 
-  // ─────────────────── Tabla: filtro en vivo ───────────────────
   onTableFilter(event: any): void {
-    this.visibleOpenCount = event?.filteredValue?.length ?? this.openTicketsList.length;
+    this.visibleActiveCount = event?.filteredValue?.length ?? this.activeTicketsList.length;
   }
 
   // ─────────────────── Drawer ───────────────────
   openTicket(ticket: any): void {
     this.selectedTicket = ticket;
     this.drawerVisible = true;
-    this.loadingMessages = false;
     this.messages = this.buildMessages([ticket]);
     this.cdr.detectChanges();
   }
@@ -213,14 +204,13 @@ export class Home implements OnInit, OnDestroy {
       if (userBody) {
         result.push({
           id: item.ticket_id + '-user',
-          from: item.sender_email ?? 'Desconocido',
+          from: item.email ?? 'Desconocido',
           date: item.created_at ?? '',
           body: this.cleanEmailHtml(userBody),
           isAgent: false,
           attachments: this.extractAttachments(item),
         });
       }
-
       const agentBody = item.resolution_notes ?? '';
       if (agentBody) {
         result.push({
@@ -236,15 +226,7 @@ export class Home implements OnInit, OnDestroy {
     return result;
   }
 
-  private extractAttachments(item: any) {
-    if (!Array.isArray(item.attachments)) return [];
-    return item.attachments.map((a: any) => {
-      const url = a.url ?? a.src ?? a.path ?? '';
-      return { name: a.name ?? a.filename ?? 'archivo', url, isImage: this.isImageUrl(url) };
-    });
-  }
-
-  // ─────────────────── Helpers ───────────────────
+  // ─────────────────── Helpers UI ───────────────────
   private cleanEmailHtml(html: string): string {
     if (!html) return '';
     return html
@@ -265,6 +247,14 @@ export class Home implements OnInit, OnDestroy {
     return /\.(jpe?g|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
   }
 
+  private extractAttachments(item: any) {
+    if (!Array.isArray(item.attachments)) return [];
+    return item.attachments.map((a: any) => {
+      const url = a.url ?? a.src ?? a.path ?? '';
+      return { name: a.name ?? a.filename ?? 'archivo', url, isImage: this.isImageUrl(url) };
+    });
+  }
+
   isHtml(s: string): boolean {
     return /<[a-z][\s\S]*>/i.test(s ?? '');
   }
@@ -273,8 +263,8 @@ export class Home implements OnInit, OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(this.cleanEmailHtml(html));
   }
 
-  initial(email: string): string {
-    return (email ?? '?').charAt(0).toUpperCase();
+  initial(name: string): string {
+    return (name ?? '?').charAt(0).toUpperCase();
   }
 
   openLightbox(src: string): void {
@@ -286,27 +276,58 @@ export class Home implements OnInit, OnDestroy {
 
   clearFilters(): void {
     this.dt?.clear();
-    this.visibleOpenCount = this.openTicketsList.length;
+    this.visibleActiveCount = this.activeTicketsList.length;
   }
 
   onGlobalFilter(e: Event): void {
     this.dt?.filterGlobal((e.target as HTMLInputElement).value, 'contains');
   }
 
+  // ─────────────────── Estilos y Etiquetas ───────────────────
   getStatusSeverity(s: string): Severity {
-    return ({ Open: 'info', Pending: 'warn', Closed: 'success' } as any)[s] ?? 'secondary';
-  }
-  getPrioritySeverity(p: string): Severity {
     return (
-      ({ Critical: 'danger', High: 'warn', Medium: 'info', Low: 'secondary' } as any)[p] ??
-      'secondary'
+      ({ Open: 'info', Assigned: 'secondary', 'In progress': 'warn', Closed: 'success' } as any)[
+        s
+      ] ?? 'secondary'
     );
   }
+
   translateStatus(s: string): string {
-    return ({ Open: 'Abierto', Pending: 'Pendiente', Closed: 'Cerrado' } as any)[s] ?? s;
+    return (
+      (
+        {
+          Open: 'Abierto',
+          Assigned: 'Asignado',
+          'In progress': 'En Proceso',
+          Closed: 'Cerrado',
+        } as any
+      )[s] ?? s
+    );
   }
-  translatePriority(p: string): string {
-    return ({ Critical: 'Crítica', High: 'Alta', Medium: 'Media', Low: 'Baja' } as any)[p] ?? p;
+
+  getPriorityClass(p: string): string {
+    const s = (p || '').toLowerCase();
+    return s.startsWith('p1')
+      ? 'prio-p1'
+      : s.startsWith('p2')
+        ? 'prio-p2'
+        : s.startsWith('p3')
+          ? 'prio-p3'
+          : s.startsWith('p4')
+            ? 'prio-p4'
+            : 'prio-sr';
+  }
+
+  getPriorityLabel(p: string): string {
+    return (
+      {
+        'prio-p1': 'Crítica',
+        'prio-p2': 'Alta',
+        'prio-p3': 'Media',
+        'prio-p4': 'Baja',
+        'prio-sr': 'Servicio',
+      }[this.getPriorityClass(p)] || 'Media'
+    );
   }
 
   // ─────────────────── Charts ───────────────────
@@ -321,15 +342,22 @@ export class Home implements OnInit, OnDestroy {
     const ctx = this.statusChartRef?.nativeElement?.getContext('2d');
     if (!ctx) return;
 
+    const counts = {
+      open: this.tickets.filter((t) => t.status === 'Open').length,
+      assigned: this.tickets.filter((t) => t.status === 'Assigned').length,
+      progress: this.tickets.filter((t) => t.status === 'In progress').length,
+      closed: this.tickets.filter((t) => t.status === 'Closed').length,
+    };
+
     this.charts.push(
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Abiertos', 'Cerrados'],
+          labels: ['Abiertos', 'Asignados', 'En Proceso', 'Cerrados'],
           datasets: [
             {
-              data: [this.openTickets, this.closedTickets],
-              backgroundColor: ['#3b82f6', '#10b981'],
+              data: [counts.open, counts.assigned, counts.progress, counts.closed],
+              backgroundColor: ['#3b82f6', '#94a3b8', '#f59e0b', '#10b981'],
               borderWidth: 0,
               hoverOffset: 12,
               spacing: 3,
@@ -364,18 +392,20 @@ export class Home implements OnInit, OnDestroy {
     const ctx = this.priorityChartRef?.nativeElement?.getContext('2d');
     if (!ctx) return;
 
-    const priorities = ['Critical', 'High', 'Medium', 'Low'];
-    const counts = priorities.map((p) => this.tickets.filter((t: any) => t.priority === p).length);
+    const priorities = ['P1', 'P2', 'P3', 'P4', 'Solicitud'];
+    const counts = priorities.map(
+      (p) => this.tickets.filter((t) => (t.priority || '').toUpperCase().includes(p)).length,
+    );
 
     this.charts.push(
       new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Crítica', 'Alta', 'Media', 'Baja'],
+          labels: ['Crítica', 'Alta', 'Media', 'Baja', 'Servicio'],
           datasets: [
             {
               data: counts,
-              backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#94a3b8'],
+              backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#94a3b8', '#8b5cf6'],
               borderRadius: 10,
               borderSkipped: false,
               maxBarThickness: 46,

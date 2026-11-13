@@ -1,38 +1,46 @@
 <div class="login-wrapper">
-  
   <!-- Tarjeta central -->
   <div class="login-card">
-    
     <!-- Lado izquierdo: Imagen / Branding -->
     <div class="login-image-side">
       <div class="image-overlay">
-        <i class="pi pi-box brand-icon"></i>
-        <h2>Mesa de Ayuda<br>CCL</h2>
+        <div class="brand-badge">
+          <i class="pi pi-box"></i>
+        </div>
+        <h2>Mesa de Ayuda<br />CCL</h2>
         <p>Plataforma de gestión de soporte técnico corporativo.</p>
       </div>
     </div>
 
     <!-- Lado derecho: Formulario -->
     <div class="login-form-side">
-      
       <div class="form-header">
-        <h1>Bienvenido</h1>
-        <p>Ingresa tus credenciales para acceder al sistema.</p>
+        <h1>Bienvenido <span class="wave">👋</span></h1>
+        <p>Ingresa tus credenciales para acceder a la plataforma.</p>
       </div>
 
       <!-- Mensaje de error dinámico (viene de n8n) -->
       @if (loginError) {
-        <p-message severity="error" [text]="errorMessage" styleClass="w-full mb-3"></p-message>
+        <p-message
+          severity="error"
+          [text]="errorMessage"
+          styleClass="w-full mb-4 custom-error-msg"
+        ></p-message>
       }
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        
         <!-- Email -->
         <div class="field">
           <label for="email">Correo Corporativo</label>
           <p-iconfield>
             <p-inputicon styleClass="pi pi-envelope" />
-            <input pInputText id="email" type="email" formControlName="email" placeholder="ejemplo@ccl.com.co" />
+            <input
+              pInputText
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="ejemplo@ccl.com.co"
+            />
           </p-iconfield>
           @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
             <small class="p-error">Ingresa un correo válido.</small>
@@ -42,7 +50,13 @@
         <!-- Contraseña -->
         <div class="field">
           <label for="password">Contraseña</label>
-          <p-password formControlName="password" [toggleMask]="true" [feedback]="false" placeholder="••••••••" inputStyleClass="w-full"></p-password>
+          <p-password
+            formControlName="password"
+            [toggleMask]="true"
+            [feedback]="false"
+            placeholder="••••••••"
+            inputStyleClass="w-full"
+          ></p-password>
           @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
             <small class="p-error">La contraseña es obligatoria.</small>
           }
@@ -58,21 +72,22 @@
         </div>
 
         <!-- Botón Principal -->
-        <p-button 
-          type="submit" 
-          label="Iniciar Sesión" 
+        <p-button
+          type="submit"
+          label="Iniciar Sesión"
           icon="pi pi-sign-in"
-          styleClass="w-full btn-modern" 
-          [loading]="isLoading">
+          styleClass="w-full btn-modern"
+          [loading]="isLoading"
+        >
         </p-button>
-
       </form>
 
       <!-- Footer -->
       <div class="footer-text">
         <p>© 2026 Corporación Colombiana de Logística</p>
-      </div>
 
+        <p>Blas Rangel V1.0.0</p>
+      </div>      
     </div>
   </div>
 </div>

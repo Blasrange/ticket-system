@@ -1,17 +1,19 @@
 <div class="agents-page">
-  <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Agentes de Soporte</h1>
       <p class="page-subtitle">Directorio de agentes registrados en el sistema</p>
     </div>
-    <button class="btn-refresh" (click)="loadAgents()" [disabled]="loading">
-      <i class="pi pi-refresh" [class.spinning]="loading"></i>
-      Actualizar
-    </button>
+    <div class="header-actions">
+      <button class="btn-export" (click)="openCreate()">
+        <i class="pi pi-user-plus"></i> Nuevo Agente
+      </button>
+      <button class="btn-refresh" (click)="loadAgents()" [disabled]="loading">
+        <i class="pi pi-refresh" [class.spinning]="loading"></i> Actualizar
+      </button>
+    </div>
   </div>
 
-  <!-- Table Card -->
   <div class="table-card">
     <p-table
       #dt
@@ -26,7 +28,6 @@
       styleClass="agents-ptable"
       rowHover="true"
     >
-      <!-- Caption -->
       <ng-template #caption>
         <div class="table-caption">
           <div class="caption-left">
@@ -45,8 +46,10 @@
             <p-iconfield>
               <p-inputicon><i class="pi pi-search"></i></p-inputicon>
               <input
+                #searchInput
                 pInputText
                 type="text"
+                autocomplete="off"
                 (input)="onGlobalFilter($event)"
                 placeholder="Buscar por nombre, email..."
                 class="search-input"
@@ -56,36 +59,27 @@
         </div>
       </ng-template>
 
-      <!-- Header -->
       <ng-template #header>
         <tr>
           <th style="min-width: 135px">
-            <div class="th-cell">
-              ID Agente <p-columnFilter type="text" field="agent_id" display="menu" />
-            </div>
+            <div class="th-cell">ID Agente <p-columnFilter type="text" field="agent_id" display="menu" /></div>
           </th>
           <th style="min-width: 250px">
-            <div class="th-cell">
-              Nombre <p-columnFilter type="text" field="full_name" display="menu" />
-            </div>
+            <div class="th-cell">Nombre <p-columnFilter type="text" field="full_name" display="menu" /></div>
           </th>
           <th style="min-width: 220px">
-            <div class="th-cell">
-              Email <p-columnFilter type="text" field="email" display="menu" />
-            </div>
+            <div class="th-cell">Email <p-columnFilter type="text" field="email" display="menu" /></div>
           </th>
           <th style="min-width: 180px">
-            <div class="th-cell">
-              Rol <p-columnFilter type="text" field="role" display="menu" />
-            </div>
+            <div class="th-cell">Rol <p-columnFilter type="text" field="role" display="menu" /></div>
           </th>
           <th style="min-width: 135px">
             <div class="th-cell">Estado</div>
           </th>
+          <th style="width: 80px; text-align: center;">Acciones</th>
         </tr>
       </ng-template>
 
-      <!-- Body -->
       <ng-template #body let-agent>
         <tr class="agent-row">
           <td>
@@ -101,7 +95,7 @@
             <span class="agent-email">{{ agent.email }}</span>
           </td>
           <td>
-            <span class="agent-role">{{ agent.role }}</span>
+            <span class="agent-role" [ngClass]="getRoleClass(agent.role)">{{ agent.role }}</span>
           </td>
           <td>
             <p-tag
@@ -110,13 +104,17 @@
               styleClass="status-tag"
             />
           </td>
+          <td style="text-align: center;">
+            <button class="btn-open-ticket" (click)="openEdit(agent)" title="Editar Agente">
+              <i class="pi pi-pencil"></i>
+            </button>
+          </td>
         </tr>
       </ng-template>
 
-      <!-- Empty -->
       <ng-template #emptymessage>
         <tr>
-          <td colspan="5">
+          <td colspan="6">
             <div class="empty-state">
               <i class="pi pi-users"></i>
               <span>No se encontraron agentes registrados.</span>
@@ -128,3 +126,10 @@
     </p-table>
   </div>
 </div>
+
+<app-agent-form
+  [(visible)]="drawerVisible"
+  [agentId]="selectedAgentId"
+  [agentData]="selectedAgentData"
+  (saved)="onAgentSaved()"
+></app-agent-form>

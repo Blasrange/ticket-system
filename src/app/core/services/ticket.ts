@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environments'; // ajusta la ruta si es necesario
+import { environment } from '../../environments/environments';
 
 @Injectable({ providedIn: 'root' })
 export class TicketService {
@@ -9,33 +9,22 @@ export class TicketService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * ✅ NUEVO: Para la tabla del listado (componente padre `Tickets`).
-   * Devuelve TODOS los tiques.
-   */
   getTickets(): Observable<any> {
     return this.http.get(`${this.apiUrl}/get-tickets`);
   }
 
-  /**
-   * Para el detalle (componente hijo `TicketDetail`).
-   * Usa el mismo endpoint porque n8n no tiene uno específico por ID;
-   * el componente filtra por `ticket_id` internamente.
-   */
-  getTicketDetail(ticketId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/get-tickets`);
+  getTicketDetail(id: string): Observable<any> {
+    return this.getTickets();
   }
 
-  /**
-   * Lista de agentes para el dropdown de asignación.
-   */
   getAgents(): Observable<any> {
     return this.http.get(`${this.apiUrl}/get-agents`);
   }
 
-  /**
-   * Guarda el cambio de estado en Google Sheets vía n8n.
-   */
+  getMessages(ticketId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/get-messages`, { ticket_id: ticketId });
+  }
+
   updateTicketStatus(ticketId: string, status: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/update-ticket-status`, {
       ticket_id: ticketId,
@@ -43,24 +32,33 @@ export class TicketService {
     });
   }
 
-  /**
-   * Guarda el agente asignado en Google Sheets vía n8n.
-   */
-  updateTicketAgent(ticketId: string, agentEmail: string): Observable<any> {
+  updateTicketAgent(ticketId: string, agentEmail: string, agentName: string = ''): Observable<any> {
     return this.http.post(`${this.apiUrl}/update-ticket-agent`, {
       ticket_id: ticketId,
       assigned_agent: agentEmail,
+      agent_name: agentName,
     });
   }
 
-  /**
-   * Guarda la respuesta del agente en `resolution_notes`.
-   */
-  sendReply(ticketId: string, body: string, senderEmail: string): Observable<any> {
+  // NUEVO: Endpoint para actualizar la prioridad
+  updateTicketPriority(ticketId: string, priority: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/update-ticket-priority`, {
+      ticket_id: ticketId,
+      priority: priority,
+    });
+  }
+
+  sendReply(ticketId: string, body: string, senderEmail: string, files: File[] = []): Observable<any> {
+    if (files.length > 0) {
+      console.warn(`[sendReply] Archivos no soportados aún.`);
+    }
     return this.http.post(`${this.apiUrl}/add-reply`, {
       ticket_id: ticketId,
       body: body,
       sender_email: senderEmail,
+      created_at: new Date().toISOString(),
+      message_id: 'MSG-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      is_agent: true,
     });
   }
 }

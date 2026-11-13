@@ -12,7 +12,39 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideOptimus({
-      theme: { preset: Aura, options: { darkModeSelector: false } }
+      theme: { preset: Aura, options: { darkModeSelector: false } },
+      translation: {
+        startsWith: 'Empieza con',
+        contains: 'Contiene',
+        notContains: 'No contiene',
+        endsWith: 'Termina con',
+        equals: 'Igual a',
+        notEquals: 'Diferente de',
+        noFilter: 'Sin filtro',
+        lt: 'Menor que',
+        lte: 'Menor o igual a',
+        gt: 'Mayor que',
+        gte: 'Mayor o igual a',
+        is: 'Es',
+        isNot: 'No es',
+        before: 'Antes de',
+        after: 'Después de',
+        clear: 'Limpiar',
+        apply: 'Aplicar',
+        matchAll: 'Coincidir con todos',
+        matchAny: 'Coincidir con cualquiera',
+        addRule: 'Agregar regla',
+        removeRule: 'Eliminar regla',
+        accept: 'Sí',
+        reject: 'No',
+        choose: 'Elegir',
+        upload: 'Subir',
+        cancel: 'Cancelar',
+        dateIs: 'Fecha es',
+        dateIsNot: 'Fecha no es',
+        dateBefore: 'Fecha anterior',
+        dateAfter: 'Fecha posterior'
+      }
     }),
     provideHttpClient(withInterceptors([authInterceptor]))
   ]

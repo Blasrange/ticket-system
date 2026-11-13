@@ -1,11 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../core/services/auth';
 import { finalize } from 'rxjs/operators';
 
-// Imports de Optimus UI
 import { InputTextModule } from '@openng/optimus-ui/inputtext';
 import { PasswordModule } from '@openng/optimus-ui/password';
 import { ButtonModule } from '@openng/optimus-ui/button';
@@ -18,16 +17,24 @@ import { MessageModule } from '@openng/optimus-ui/message';
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule,
-    ButtonModule, CheckboxModule, IconFieldModule, InputIconModule, MessageModule
+    CommonModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    PasswordModule,
+    ButtonModule,
+    CheckboxModule,
+    IconFieldModule,
+    InputIconModule,
+    MessageModule,
   ],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.css',
 })
 export class Login {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // 👈 Para forzar actualización de pantalla
 
   isLoading = false;
   loginError = false;
@@ -36,7 +43,7 @@ export class Login {
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
-    rememberMe: [false]
+    rememberMe: [false],
   });
 
   onSubmit() {
@@ -47,26 +54,55 @@ export class Login {
 
     this.isLoading = true;
     this.loginError = false;
+    this.errorMessage = '';
+
+    // Limpiamos cualquier sesión previa
+    this.authService.logout();
 
     const credentials = {
       email: this.loginForm.value.email!,
-      password: this.loginForm.value.password!
+      password: this.loginForm.value.password!,
     };
 
-    this.authService.login(credentials)
+    this.authService
+      .login(credentials)
       .pipe(
         finalize(() => {
-          this.isLoading = false;
-        })
+          this.isLoading = false; // 👈 Siempre apagamos el spinner
+          this.cdr.detectChanges(); // 👈 Forzamos a Angular a pintar el cambio
+        }),
       )
       .subscribe({
-        next: () => {
+        next: (response: any) => {
+          try {
+            localStorage.setItem(
+              'currentUser',
+              JSON.stringify({
+                agent_id: response.agent_id,
+                email: response.email,
+                full_name: response.full_name,
+                role: response.role,
+              }),
+            );
+          } catch (e) {
+            console.error('Error guardando usuario', e);
+          }
           this.router.navigate(['/home']);
         },
         error: (err) => {
           this.loginError = true;
-          this.errorMessage = err.message || 'Credenciales incorrectas o error de conexión.';
-        }
+          
+          // 👇 Extraemos el mensaje exacto que envía n8n (401)
+          if (err.error && err.error.message) {
+            this.errorMessage = err.error.message;
+          } else if (err.message) {
+            this.errorMessage = err.message;
+          } else {
+            this.errorMessage = 'Credenciales incorrectas.';
+          }
+          
+          this.cdr.detectChanges(); // Forzamos la actualización
+        },
       });
   }
 }

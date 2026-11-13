@@ -1,0 +1,109 @@
+<p-drawer
+  [(visible)]="visible"
+  (onHide)="onClose()"
+  position="right"
+  [style]="{ width: '520px' }"
+  styleClass="agent-form-drawer"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-header-content">
+      <div class="drawer-icon-wrapper">
+        <i class="pi" [ngClass]="isEditing ? 'pi-user-edit' : 'pi-user-plus'"></i>
+      </div>
+      <div>
+        <h2 class="drawer-title">{{ isEditing ? 'Editar Agente' : 'Nuevo Agente' }}</h2>
+        <p class="drawer-subtitle">
+          {{ isEditing ? 'Actualiza la información del agente de soporte.' : 'Ingresa los datos para registrar un nuevo agente.' }}
+        </p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="drawer-body" [formGroup]="agentForm">
+    
+    <div class="form-section">
+      <h3 class="section-title"><i class="pi pi-id-card"></i> Información Personal</h3>
+      
+      <div class="form-field">
+        <label>Nombre Completo <span class="required">*</span></label>
+        <input pInputText formControlName="full_name" autocomplete="off" placeholder="Ej. Juan Pérez" />
+        @if (agentForm.get('full_name')?.invalid && agentForm.get('full_name')?.touched) {
+          <small class="p-error"><i class="pi pi-exclamation-circle"></i> El nombre es obligatorio.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label>Correo Electrónico <span class="required">*</span></label>
+        <input pInputText formControlName="email" type="email" autocomplete="off" placeholder="juan@ccl.com.co" />
+        @if (agentForm.get('email')?.invalid && agentForm.get('email')?.touched) {
+          <small class="p-error"><i class="pi pi-exclamation-circle"></i> Ingresa un correo válido.</small>
+        }
+      </div>
+
+      @if (!isEditing) {
+        <div class="form-field">
+          <label>Contraseña de Acceso <span class="required">*</span></label>
+          <p-password 
+            formControlName="password" 
+            [toggleMask]="true" 
+            [feedback]="false" 
+            autocomplete="new-password"
+            placeholder="Mínimo 6 caracteres" 
+            inputStyleClass="w-full"
+          ></p-password>
+          @if (agentForm.get('password')?.invalid && agentForm.get('password')?.touched) {
+            <small class="p-error"><i class="pi pi-exclamation-circle"></i> La contraseña es obligatoria (mín. 6).</small>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="form-section">
+      <h3 class="section-title"><i class="pi pi-shield"></i> Configuración de Cuenta</h3>
+
+      <div class="form-field">
+        <label>Rol del Sistema <span class="required">*</span></label>
+        <p-select
+          [options]="roleOptions"
+          formControlName="role"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          placeholder="Seleccione un rol"
+          styleClass="w-full"
+        ></p-select>
+      </div>
+
+      <div class="form-field">
+        <label>Estado de la Cuenta <span class="required">*</span></label>
+        <p-select
+          [options]="statusOptions"
+          formControlName="is_active"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-select>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="drawer-footer">
+      <p-button 
+        label="Cancelar" 
+        styleClass="p-button-text p-button-secondary btn-cancel" 
+        (onClick)="onClose()" 
+      />
+      <p-button 
+        [label]="isEditing ? 'Guardar Cambios' : 'Crear Agente'" 
+        icon="pi pi-check" 
+        styleClass="btn-save"
+        [loading]="saving" 
+        [disabled]="agentForm.invalid" 
+        (onClick)="save()" 
+      />
+    </div>
+  </ng-template>
+</p-drawer>
