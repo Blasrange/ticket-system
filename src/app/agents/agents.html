@@ -15,19 +15,9 @@
   </div>
 
   <div class="table-card">
-    <p-table
-      #dt
-      [value]="agents"
-      dataKey="agent_id"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [loading]="loading"
-      [paginator]="true"
-      [globalFilterFields]="['agent_id', 'full_name', 'email', 'role']"
-      [showGridlines]="false"
-      styleClass="agents-ptable"
-      rowHover="true"
-    >
+    <p-table #dt [value]="agents" dataKey="agent_id" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
+      [paginator]="true" [globalFilterFields]="['agent_id', 'full_name', 'email', 'role']" [showGridlines]="false"
+      styleClass="agents-ptable" rowHover="true">
       <ng-template #caption>
         <div class="table-caption">
           <div class="caption-left">
@@ -35,25 +25,12 @@
             <p class="table-card-desc">{{ agents.length }} registros en total</p>
           </div>
           <div class="caption-right">
-            <p-button
-              label="Limpiar filtros"
-              icon="pi pi-filter-slash"
-              [outlined]="true"
-              size="small"
-              (onClick)="clearFilters()"
-              styleClass="btn-clear-table"
-            />
+            <p-button label="Limpiar filtros" icon="pi pi-filter-slash" [outlined]="true" size="small"
+              (onClick)="clearFilters()" styleClass="btn-clear-table" />
             <p-iconfield>
               <p-inputicon><i class="pi pi-search"></i></p-inputicon>
-              <input
-                #searchInput
-                pInputText
-                type="text"
-                autocomplete="off"
-                (input)="onGlobalFilter($event)"
-                placeholder="Buscar por nombre, email..."
-                class="search-input"
-              />
+              <input #searchInput pInputText type="text" autocomplete="off" (input)="onGlobalFilter($event)"
+                placeholder="Buscar por nombre, email..." class="search-input" />
             </p-iconfield>
           </div>
         </div>
@@ -98,11 +75,8 @@
             <span class="agent-role" [ngClass]="getRoleClass(agent.role)">{{ agent.role }}</span>
           </td>
           <td>
-            <p-tag
-              [value]="translateStatus(agent.is_active)"
-              [severity]="getStatusSeverity(agent.is_active)"
-              styleClass="status-tag"
-            />
+            <p-tag [value]="translateStatus(agent.is_active)" [severity]="getStatusSeverity(agent.is_active)"
+              styleClass="status-tag" />
           </td>
           <td style="text-align: center;">
             <button class="btn-open-ticket" (click)="openEdit(agent)" title="Editar Agente">
@@ -127,9 +101,5 @@
   </div>
 </div>
 
-<app-agent-form
-  [(visible)]="drawerVisible"
-  [agentId]="selectedAgentId"
-  [agentData]="selectedAgentData"
-  (saved)="onAgentSaved()"
-></app-agent-form>
+<app-agent-form [(visible)]="drawerVisible" [agentId]="selectedAgentId" [agentData]="selectedAgentData"
+  (saved)="onAgentSaved()"></app-agent-form>

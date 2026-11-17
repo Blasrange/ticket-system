@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer } from '@angular/platform-browser';
 import { Chart, registerables, Plugin } from 'chart.js';
 import { TicketService } from '../core/services/ticket';
 
@@ -21,20 +20,10 @@ import { InputTextModule } from '@openng/optimus-ui/inputtext';
 import { IconFieldModule } from '@openng/optimus-ui/iconfield';
 import { InputIconModule } from '@openng/optimus-ui/inputicon';
 import { SelectModule } from '@openng/optimus-ui/select';
-import { DrawerModule } from '@openng/optimus-ui/drawer';
 
 Chart.register(...registerables);
 
 type Severity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
-
-export interface Message {
-  id: string;
-  from: string;
-  date: string;
-  body: string;
-  isAgent: boolean;
-  attachments: { name: string; url: string; isImage: boolean }[];
-}
 
 const centerTextPlugin: Plugin<'doughnut'> = {
   id: 'centerText',
@@ -72,17 +61,16 @@ const centerTextPlugin: Plugin<'doughnut'> = {
     IconFieldModule,
     InputIconModule,
     SelectModule,
-    DrawerModule,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements OnInit, OnDestroy {
   @ViewChild('dt') dt!: Table;
+  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
   private ticketService = inject(TicketService);
   private cdr = inject(ChangeDetectorRef);
-  private sanitizer = inject(DomSanitizer);
 
   // ── Charts ──
   @ViewChild('statusChart') statusChartRef?: ElementRef<HTMLCanvasElement>;
@@ -91,40 +79,29 @@ export class Home implements OnInit, OnDestroy {
   private charts: Chart<any, any, any>[] = [];
 
   readonly currentYear = new Date().getFullYear();
-  readonly slaAverage = '2.5 h';
+  readonly averageResponseTime = '2.5 h'; // ← antes "SLA Promedio"
 
-  // ── Lista ──
-  tickets: any[] = [];
+  // ── Datos ──
+  tickets: any[] = []; // dataset original
+  filteredTickets: any[] = []; // dataset tras filtro de área
   loading = true;
 
+  // ── KPIs ──
   totalTickets = 0;
   activeTickets = 0;
+  inProgressTickets = 0; 
   closedTickets = 0;
+  unassignedTickets = 0;
+
+  // ── Filtro por área ──
+  availableAreas: string[] = [];
+  areaOptions: { label: string; value: string }[] = [{ label: 'Todas las áreas', value: '' }];
+  selectedArea = '';
 
   // ── Tabla ──
+  allActiveTickets: any[] = [];
   activeTicketsList: any[] = [];
   visibleActiveCount = 0;
-
-  // ── Drawer ──
-  drawerVisible = false;
-  selectedTicket: any = null;
-  messages: Message[] = [];
-  lightboxSrc: string | null = null;
-
-  // ── Filtros ──
-  statusOptions = [
-    { label: 'Abierto', value: 'Open' },
-    { label: 'Asignado', value: 'Assigned' },
-    { label: 'En Proceso', value: 'In progress' },
-    { label: 'Cerrado', value: 'Closed' },
-  ];
-  priorityOptions = [
-    { label: 'Crítica', value: 'P1' },
-    { label: 'Alta', value: 'P2' },
-    { label: 'Media', value: 'P3' },
-    { label: 'Baja', value: 'P4' },
-    { label: 'Servicio', value: 'Solicitud' },
-  ];
 
   ngOnInit(): void {
     this.loadTickets();
@@ -134,7 +111,7 @@ export class Home implements OnInit, OnDestroy {
     this.destroyCharts();
   }
 
-  // ─────────────────── Lista ───────────────────
+  // ─────────────────── Carga ───────────────────
   loadTickets(): void {
     this.loading = true;
     this.ticketService.getTickets().subscribe({
@@ -145,19 +122,24 @@ export class Home implements OnInit, OnDestroy {
             : response && typeof response === 'object'
               ? [response]
               : [];
-
           this.tickets = dataArray.map((item: any) => item.json ?? item);
 
-          // Filtramos estados activos: Open, Assigned, In progress
-          const activeStatuses = ['Open', 'Assigned', 'In progress'];
-          this.activeTicketsList = this.tickets.filter((t: any) =>
-            activeStatuses.includes(t.status),
-          );
+          // Opciones únicas de área
+          this.availableAreas = Array.from(
+            new Set(
+              this.tickets
+                .map((t: any) => (t.assigned_area ?? '').toString().trim())
+                .filter((a: string) => a !== ''),
+            ),
+          ).sort();
 
-          this.visibleActiveCount = this.activeTicketsList.length;
-          this.totalTickets = this.tickets.length;
-          this.activeTickets = this.activeTicketsList.length;
-          this.closedTickets = this.tickets.filter((t: any) => t.status === 'Closed').length;
+          this.areaOptions = [
+            { label: 'Todas las áreas', value: '' },
+            ...this.availableAreas.map((a) => ({ label: a, value: a })),
+          ];
+          this.selectedArea = '';
+
+          this.applyAreaFilter();
         } catch (err) {
           console.error('Error procesando datos:', err);
         } finally {
@@ -169,7 +151,16 @@ export class Home implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error cargando Tickets:', err);
         this.tickets = [];
+        this.filteredTickets = [];
+        this.availableAreas = [];
+        this.selectedArea = '';
         this.activeTicketsList = [];
+        this.allActiveTickets = [];
+        this.totalTickets = 0;
+        this.activeTickets = 0;
+        this.inProgressTickets = 0;
+        this.closedTickets = 0;
+        this.unassignedTickets = 0;
         this.visibleActiveCount = 0;
         this.loading = false;
         this.cdr.detectChanges();
@@ -178,105 +169,53 @@ export class Home implements OnInit, OnDestroy {
     });
   }
 
+  // ─────────────────── Filtro por área ───────────────────
+  filterByArea(): void {
+    this.applyAreaFilter();
+    this.cdr.detectChanges();
+    setTimeout(() => this.buildCharts());
+  }
+
+  private applyAreaFilter(): void {
+    this.filteredTickets = this.selectedArea
+      ? this.tickets.filter(
+          (t: any) => (t.assigned_area ?? '').toString().trim() === this.selectedArea,
+        )
+      : [...this.tickets];
+
+    const activeStatuses = ['Open', 'Assigned', 'In progress'];
+    this.allActiveTickets = this.filteredTickets.filter((t: any) =>
+      activeStatuses.includes(t.status),
+    );
+
+    this.totalTickets = this.filteredTickets.length;
+    this.activeTickets = this.allActiveTickets.length;
+    this.inProgressTickets = this.filteredTickets.filter(
+      (t: any) => t.status === 'In progress',
+    ).length;
+    this.closedTickets = this.filteredTickets.filter((t: any) => t.status === 'Closed').length;
+    this.unassignedTickets = this.allActiveTickets.filter((t: any) => !t.assigned_agent).length;
+
+    this.activeTicketsList = [...this.allActiveTickets];
+    this.visibleActiveCount = this.activeTicketsList.length;
+  }
+
+  // ─────────────────── Tabla ───────────────────
   onTableFilter(event: any): void {
     this.visibleActiveCount = event?.filteredValue?.length ?? this.activeTicketsList.length;
-  }
-
-  // ─────────────────── Drawer ───────────────────
-  openTicket(ticket: any): void {
-    this.selectedTicket = ticket;
-    this.drawerVisible = true;
-    this.messages = this.buildMessages([ticket]);
-    this.cdr.detectChanges();
-  }
-
-  closeDrawer(): void {
-    this.drawerVisible = false;
-    this.selectedTicket = null;
-    this.messages = [];
-    this.lightboxSrc = null;
-  }
-
-  private buildMessages(items: any[]): Message[] {
-    const result: Message[] = [];
-    items.forEach((item) => {
-      const userBody = item.body_html ?? item.body ?? item.message ?? '';
-      if (userBody) {
-        result.push({
-          id: item.ticket_id + '-user',
-          from: item.email ?? 'Desconocido',
-          date: item.created_at ?? '',
-          body: this.cleanEmailHtml(userBody),
-          isAgent: false,
-          attachments: this.extractAttachments(item),
-        });
-      }
-      const agentBody = item.resolution_notes ?? '';
-      if (agentBody) {
-        result.push({
-          id: item.ticket_id + '-agent',
-          from: item.assigned_agent ?? 'Agente de soporte',
-          date: item.closed_at ?? item.created_at ?? '',
-          body: this.cleanEmailHtml(agentBody),
-          isAgent: true,
-          attachments: [],
-        });
-      }
-    });
-    return result;
-  }
-
-  // ─────────────────── Helpers UI ───────────────────
-  private cleanEmailHtml(html: string): string {
-    if (!html) return '';
-    return html
-      .replace(/\ssrc=["'][^"']*cid:[^"']*["']/gi, ' src=""')
-      .replace(/\ssrcset=["'][^"']*["']/gi, '')
-      .replace(/\sbackground=["'][^"']*cid:[^"']*["']/gi, '');
-  }
-
-  extractImages(html: string): string[] {
-    if (!html) return [];
-    return [...html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)]
-      .map((m) => m[1])
-      .filter((s) => s && !s.startsWith('data:') && !s.startsWith('cid:') && s.trim() !== '');
-  }
-
-  isImageUrl(url: string): boolean {
-    if (!url || url.startsWith('cid:') || url.startsWith('data:')) return false;
-    return /\.(jpe?g|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
-  }
-
-  private extractAttachments(item: any) {
-    if (!Array.isArray(item.attachments)) return [];
-    return item.attachments.map((a: any) => {
-      const url = a.url ?? a.src ?? a.path ?? '';
-      return { name: a.name ?? a.filename ?? 'archivo', url, isImage: this.isImageUrl(url) };
-    });
-  }
-
-  isHtml(s: string): boolean {
-    return /<[a-z][\s\S]*>/i.test(s ?? '');
-  }
-
-  safeHtml(html: string) {
-    return this.sanitizer.bypassSecurityTrustHtml(this.cleanEmailHtml(html));
   }
 
   initial(name: string): string {
     return (name ?? '?').charAt(0).toUpperCase();
   }
 
-  openLightbox(src: string): void {
-    this.lightboxSrc = src;
-  }
-  closeLightbox(): void {
-    this.lightboxSrc = null;
-  }
-
   clearFilters(): void {
+    if (this.searchInput) {
+      this.searchInput.nativeElement.value = '';
+    }
+    this.selectedArea = '';
+    this.filterByArea();
     this.dt?.clear();
-    this.visibleActiveCount = this.activeTicketsList.length;
   }
 
   onGlobalFilter(e: Event): void {
@@ -330,7 +269,7 @@ export class Home implements OnInit, OnDestroy {
     );
   }
 
-  // ─────────────────── Charts ───────────────────
+  // ─────────────────── Charts (usan filteredTickets) ───────────────────
   private buildCharts(): void {
     this.destroyCharts();
     this.buildStatusChart();
@@ -343,10 +282,10 @@ export class Home implements OnInit, OnDestroy {
     if (!ctx) return;
 
     const counts = {
-      open: this.tickets.filter((t) => t.status === 'Open').length,
-      assigned: this.tickets.filter((t) => t.status === 'Assigned').length,
-      progress: this.tickets.filter((t) => t.status === 'In progress').length,
-      closed: this.tickets.filter((t) => t.status === 'Closed').length,
+      open: this.filteredTickets.filter((t) => t.status === 'Open').length,
+      assigned: this.filteredTickets.filter((t) => t.status === 'Assigned').length,
+      progress: this.filteredTickets.filter((t) => t.status === 'In progress').length,
+      closed: this.filteredTickets.filter((t) => t.status === 'Closed').length,
     };
 
     this.charts.push(
@@ -394,7 +333,8 @@ export class Home implements OnInit, OnDestroy {
 
     const priorities = ['P1', 'P2', 'P3', 'P4', 'Solicitud'];
     const counts = priorities.map(
-      (p) => this.tickets.filter((t) => (t.priority || '').toUpperCase().includes(p)).length,
+      (p) =>
+        this.filteredTickets.filter((t) => (t.priority || '').toUpperCase().includes(p)).length,
     );
 
     this.charts.push(
@@ -454,12 +394,10 @@ export class Home implements OnInit, OnDestroy {
     ];
     const counts = new Array(12).fill(0) as number[];
 
-    this.tickets.forEach((t: any) => {
+    this.filteredTickets.forEach((t: any) => {
       if (!t.created_at) return;
       const d = new Date(t.created_at);
-      if (!isNaN(d.getTime()) && d.getFullYear() === this.currentYear) {
-        counts[d.getMonth()]++;
-      }
+      if (!isNaN(d.getTime()) && d.getFullYear() === this.currentYear) counts[d.getMonth()]++;
     });
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 260);

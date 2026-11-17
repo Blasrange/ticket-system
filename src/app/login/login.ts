@@ -13,6 +13,8 @@ import { IconFieldModule } from '@openng/optimus-ui/iconfield';
 import { InputIconModule } from '@openng/optimus-ui/inputicon';
 import { MessageModule } from '@openng/optimus-ui/message';
 
+import { ForgotPasswordComponent } from './forgot-password/forgot-password';
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -26,6 +28,7 @@ import { MessageModule } from '@openng/optimus-ui/message';
     IconFieldModule,
     InputIconModule,
     MessageModule,
+    ForgotPasswordComponent 
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -34,11 +37,13 @@ export class Login {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef); // 👈 Para forzar actualización de pantalla
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = false;
   loginError = false;
   errorMessage = '';
+  
+  forgotPasswordVisible = false; // 👈 Controla el modal
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -56,7 +61,6 @@ export class Login {
     this.loginError = false;
     this.errorMessage = '';
 
-    // Limpiamos cualquier sesión previa
     this.authService.logout();
 
     const credentials = {
@@ -68,8 +72,8 @@ export class Login {
       .login(credentials)
       .pipe(
         finalize(() => {
-          this.isLoading = false; // 👈 Siempre apagamos el spinner
-          this.cdr.detectChanges(); // 👈 Forzamos a Angular a pintar el cambio
+          this.isLoading = false;
+          this.cdr.detectChanges();
         }),
       )
       .subscribe({
@@ -91,17 +95,8 @@ export class Login {
         },
         error: (err) => {
           this.loginError = true;
-          
-          // 👇 Extraemos el mensaje exacto que envía n8n (401)
-          if (err.error && err.error.message) {
-            this.errorMessage = err.error.message;
-          } else if (err.message) {
-            this.errorMessage = err.message;
-          } else {
-            this.errorMessage = 'Credenciales incorrectas.';
-          }
-          
-          this.cdr.detectChanges(); // Forzamos la actualización
+          this.errorMessage = err.error?.message || err.message || 'Credenciales incorrectas.';
+          this.cdr.detectChanges();
         },
       });
   }

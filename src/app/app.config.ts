@@ -1,6 +1,6 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http'; 
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideOptimus } from '@openng/optimus-ui/config';
 import Aura from '@openng/optimus-ui-themes/aura';
@@ -43,9 +43,9 @@ export const appConfig: ApplicationConfig = {
         dateIs: 'Fecha es',
         dateIsNot: 'Fecha no es',
         dateBefore: 'Fecha anterior',
-        dateAfter: 'Fecha posterior'
-      }
+        dateAfter: 'Fecha posterior',
+      },
     }),
-    provideHttpClient(withInterceptors([authInterceptor]))
-  ]
+    provideHttpClient(withInterceptors([authInterceptor])),
+  ],
 };

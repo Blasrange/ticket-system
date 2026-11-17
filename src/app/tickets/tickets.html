@@ -29,16 +29,8 @@
     <!-- ============================================== -->
     <!-- TABLA ACTIVOS -->
     <!-- ============================================== -->
-    <p-table
-      *ngIf="activeTab === 'active'"
-      #dtActive
-      [value]="activeTickets"
-      dataKey="ticket_id"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [loading]="loading"
-      [paginator]="true"
-      [paginatorDropdownAppendTo]="'body'"
+    <p-table *ngIf="activeTab === 'active'" #dtActive [value]="activeTickets" dataKey="ticket_id" [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true" [paginatorDropdownAppendTo]="'body'"
       [globalFilterFields]="[
         'ticket_id',
         'subject',
@@ -52,15 +44,9 @@
         'assigned_agent',
         'status',
         'priority',
-      ]"
-      styleClass="tickets-ptable"
-      rowHover="true"
-    >
+      ]" styleClass="tickets-ptable" rowHover="true">
       <ng-template pTemplate="loading">
-        <div
-          class="page-loading"
-          style="min-height: 200px; padding: 40px 0; background: transparent"
-        >
+        <div class="page-loading" style="min-height: 200px; padding: 40px 0; background: transparent">
           <div class="spinner"></div>
           <span>Cargando tickets...</span>
         </div>
@@ -73,24 +59,12 @@
             <p class="table-card-desc">Tickets en estado Abierto, Asignado o En Proceso</p>
           </div>
           <div class="caption-right">
-            <p-button
-              label="Limpiar filtros"
-              icon="pi pi-filter-slash"
-              [outlined]="true"
-              size="small"
-              (onClick)="clearFilters(searchInput)"
-              styleClass="btn-clear-table"
-            />
+            <p-button label="Limpiar filtros" icon="pi pi-filter-slash" [outlined]="true" size="small"
+              (onClick)="clearFilters(searchInput)" styleClass="btn-clear-table" />
             <p-iconfield>
               <p-inputicon><i class="pi pi-search"></i></p-inputicon>
-              <input
-                #searchInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($event)"
-                placeholder="Buscar..."
-                class="search-input"
-              />
+              <input #searchInput pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..."
+                class="search-input" />
             </p-iconfield>
           </div>
         </div>
@@ -109,7 +83,8 @@
               Asunto <p-columnFilter type="text" field="subject" display="menu" />
             </div>
           </th>
-          <th style="min-width: 170px">
+          <!-- ✅ Remitente: min-width 200px para que quepa nombre + email -->
+          <th style="min-width: 200px">
             <div class="th-cell">
               Remitente <p-columnFilter type="text" field="email" display="menu" />
             </div>
@@ -117,126 +92,77 @@
           <th style="min-width: 140px">
             <div class="th-cell">
               Aplicación
-              <p-columnFilter field="application" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="applicationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="application" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="applicationOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 130px">
             <div class="th-cell">
               Área
-              <p-columnFilter field="assigned_area" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="areaOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="assigned_area" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="areaOptions" optionLabel="label"
+                    optionValue="value" placeholder="Todas" [showClear]="true" (ngModelChange)="filter($event)"
+                    class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 160px">
             <div class="th-cell">
               Operación
-              <p-columnFilter field="operation" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="operationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="operation" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="operationOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 170px">
             <div class="th-cell">
               Tipo
-              <p-columnFilter field="request_type" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="requestTypeOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todos"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="request_type" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="requestTypeOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todos" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
-          <th style="min-width: 160px">
+          <!-- ✅ Agente: min-width 190px para nombre completo -->
+          <th style="min-width: 190px">
             <div class="th-cell">
               Agente <p-columnFilter type="text" field="assigned_agent" display="menu" />
             </div>
           </th>
-          <th style="min-width: 170px">
+          <!-- ✅ Renombrada: SLA / Fechas → Vencimiento -->
+          <th style="min-width: 180px">
             <div class="th-cell">
-              SLA / Fechas <p-columnFilter type="date" field="created_at" display="menu" />
+              Vencimiento
+              <p-columnFilter type="date" field="created_at" display="menu" />
             </div>
           </th>
           <th style="min-width: 110px">
             <div class="th-cell">
               Prioridad
-              <p-columnFilter field="priority" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="priorityOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="priority" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="priorityOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 120px">
             <div class="th-cell">
               Estado
-              <p-columnFilter field="status" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="statusOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todos"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="status" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="statusOptions" optionLabel="label"
+                    optionValue="value" placeholder="Todos" [showClear]="true" (ngModelChange)="filter($event)"
+                    class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
         </tr>
       </ng-template>
 
       <ng-template #body let-ticket>
-        <tr
-          class="ticket-row"
-          [class.row-overdue]="isOverdue(ticket)"
+        <tr class="ticket-row" [class.row-overdue]="isOverdue(ticket)"
           [class.row-p1]="getPriorityLabel(ticket.priority) === 'Crítica'"
-          [class.row-p2]="getPriorityLabel(ticket.priority) === 'Alta'"
-          (click)="openTicket(ticket)"
-        >
+          [class.row-p2]="getPriorityLabel(ticket.priority) === 'Alta'" (click)="openTicket(ticket)">
           <td class="td-open" (click)="$event.stopPropagation(); openTicket(ticket)">
             <button class="btn-open-ticket"><i class="pi pi-eye"></i></button>
           </td>
@@ -246,54 +172,47 @@
           <td>
             <span class="ticket-subject">{{ ticket.subject || '—' }}</span>
           </td>
+
+          <!-- ✅ Remitente: nombre completo + email -->
           <td>
             <div class="user-cell">
               <div class="user-av">{{ senderInitial(ticket) }}</div>
               <div class="user-meta">
-                <span class="user-name">{{ displaySender(ticket) }}</span>
-                <span class="user-email" *ngIf="ticket.user_name && ticket.email">{{
-                  ticket.email
-                }}</span>
+                <span class="user-name" [title]="displaySender(ticket)">
+                  {{ displaySender(ticket) }}
+                </span>
+                <span class="user-email" *ngIf="ticket.user_name && ticket.email">
+                  {{ ticket.email }}
+                </span>
               </div>
             </div>
           </td>
+
           <td>
-            <span
-              *ngIf="ticket.application; else empty"
-              class="badge"
-              [ngClass]="getApplicationClass(ticket.application)"
-              >{{ ticket.application }}</span
-            >
+            <span *ngIf="ticket.application; else empty" class="badge"
+              [ngClass]="getApplicationClass(ticket.application)">{{ ticket.application }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.assigned_area; else empty"
-              class="badge"
-              [ngClass]="getAreaClass(ticket.assigned_area)"
-              >{{ ticket.assigned_area }}</span
-            >
+            <span *ngIf="ticket.assigned_area; else empty" class="badge"
+              [ngClass]="getAreaClass(ticket.assigned_area)">{{ ticket.assigned_area }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.operation; else empty"
-              class="badge"
-              [ngClass]="getOperationClass(ticket.operation)"
-              ><i class="pi pi-map-marker"></i> {{ ticket.operation }}</span
-            >
+            <span *ngIf="ticket.operation; else empty" class="badge" [ngClass]="getOperationClass(ticket.operation)"><i
+                class="pi pi-map-marker"></i> {{ ticket.operation }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.request_type; else empty"
-              class="badge"
-              [ngClass]="getRequestTypeClass(ticket.request_type)"
-              >{{ ticket.request_type }}</span
-            >
+            <span *ngIf="ticket.request_type; else empty" class="badge"
+              [ngClass]="getRequestTypeClass(ticket.request_type)">{{ ticket.request_type }}</span>
           </td>
+
+          <!-- ✅ Agente: nombre completo + fallback a email -->
           <td>
-            <div *ngIf="ticket.assigned_agent; else noAgent" class="user-cell">
+            <div *ngIf="ticket.assigned_agent || ticket.agent_name; else noAgent" class="user-cell">
               <div class="user-av agent-av">{{ agentInitial(ticket) }}</div>
               <div class="user-meta">
-                <span class="user-name">{{ displayAgent(ticket) }}</span>
+                <span class="user-name" [title]="displayAgent(ticket)">
+                  {{ displayAgent(ticket) }}
+                </span>
               </div>
             </div>
             <ng-template #noAgent>
@@ -301,44 +220,36 @@
             </ng-template>
           </td>
 
+          <!-- ✅ Fecha de vencimiento completa + barra SLA -->
           <td>
             <div class="sla-container">
               <div class="sla-header">
-                <span class="date-mini" title="Fecha de vencimiento"
-                  ><i class="pi pi-calendar"></i>
-                  {{ getDueDate(ticket) | date: 'dd/MM HH:mm' }}</span
-                >
-                <span class="sla-pct" [ngClass]="'text-' + getSlaStatus(ticket)"
-                  >{{ getSlaPercentage(ticket) }}%</span
-                >
+                <span class="date-mini" title="Fecha de vencimiento">
+                  <i class="pi pi-calendar"></i>
+                  {{ getDueDate(ticket) | date: 'dd/MM/yyyy' }}
+                </span>
+                <span class="sla-pct" [ngClass]="'text-' + getSlaStatus(ticket)">
+                  {{ getSlaPercentage(ticket) }}%
+                </span>
               </div>
               <div class="sla-track">
-                <div
-                  class="sla-fill"
-                  [ngClass]="'bg-' + getSlaStatus(ticket)"
-                  [style.width.%]="getSlaPercentage(ticket)"
-                ></div>
+                <div class="sla-fill" [ngClass]="'bg-' + getSlaStatus(ticket)"
+                  [style.width.%]="getSlaPercentage(ticket)"></div>
               </div>
               <div class="sla-message" [ngClass]="'text-' + getSlaStatus(ticket)">
-                {{ getRemainingTimeText(ticket) }}
+                <i class="pi pi-clock"></i>
+                {{ getDueDate(ticket) | date: 'dd/MM/yyyy HH:mm' }}
               </div>
             </div>
           </td>
 
           <td>
-            <span
-              class="badge prio-badge"
-              [ngClass]="getPriorityClass(ticket.priority)"
-              [title]="getPriorityTooltip(ticket.priority)"
-              >{{ getPriorityLabel(ticket.priority) }}</span
-            >
+            <span class="badge prio-badge" [ngClass]="getPriorityClass(ticket.priority)"
+              [title]="getPriorityTooltip(ticket.priority)">{{ getPriorityLabel(ticket.priority) }}</span>
           </td>
           <td>
-            <p-tag
-              [value]="translateStatus(ticket.status)"
-              [severity]="getStatusSeverity(ticket.status)"
-              styleClass="status-tag"
-            />
+            <p-tag [value]="translateStatus(ticket.status)" [severity]="getStatusSeverity(ticket.status)"
+              styleClass="status-tag" />
           </td>
         </tr>
         <ng-template #empty><span class="muted-dash">—</span></ng-template>
@@ -358,16 +269,8 @@
     <!-- ============================================== -->
     <!-- TABLA CERRADOS -->
     <!-- ============================================== -->
-    <p-table
-      *ngIf="activeTab === 'closed'"
-      #dtClosed
-      [value]="closedTickets"
-      dataKey="ticket_id"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [loading]="loading"
-      [paginator]="true"
-      [paginatorDropdownAppendTo]="'body'"
+    <p-table *ngIf="activeTab === 'closed'" #dtClosed [value]="closedTickets" dataKey="ticket_id" [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading" [paginator]="true" [paginatorDropdownAppendTo]="'body'"
       [globalFilterFields]="[
         'ticket_id',
         'subject',
@@ -381,15 +284,9 @@
         'assigned_agent',
         'status',
         'priority',
-      ]"
-      styleClass="tickets-ptable"
-      rowHover="true"
-    >
+      ]" styleClass="tickets-ptable" rowHover="true">
       <ng-template pTemplate="loading">
-        <div
-          class="page-loading"
-          style="min-height: 200px; padding: 40px 0; background: transparent"
-        >
+        <div class="page-loading" style="min-height: 200px; padding: 40px 0; background: transparent">
           <div class="spinner"></div>
           <span>Cargando tickets...</span>
         </div>
@@ -402,24 +299,12 @@
             <p class="table-card-desc">Historial de tickets finalizados</p>
           </div>
           <div class="caption-right">
-            <p-button
-              label="Limpiar filtros"
-              icon="pi pi-filter-slash"
-              [outlined]="true"
-              size="small"
-              (onClick)="clearFilters(searchInput)"
-              styleClass="btn-clear-table"
-            />
+            <p-button label="Limpiar filtros" icon="pi pi-filter-slash" [outlined]="true" size="small"
+              (onClick)="clearFilters(searchInput)" styleClass="btn-clear-table" />
             <p-iconfield>
               <p-inputicon><i class="pi pi-search"></i></p-inputicon>
-              <input
-                #searchInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($event)"
-                placeholder="Buscar..."
-                class="search-input"
-              />
+              <input #searchInput pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..."
+                class="search-input" />
             </p-iconfield>
           </div>
         </div>
@@ -438,7 +323,8 @@
               Asunto <p-columnFilter type="text" field="subject" display="menu" />
             </div>
           </th>
-          <th style="min-width: 170px">
+          <!-- ✅ Remitente: min-width 200px -->
+          <th style="min-width: 200px">
             <div class="th-cell">
               Remitente <p-columnFilter type="text" field="email" display="menu" />
             </div>
@@ -446,72 +332,41 @@
           <th style="min-width: 140px">
             <div class="th-cell">
               Aplicación
-              <p-columnFilter field="application" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="applicationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="application" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="applicationOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 130px">
             <div class="th-cell">
               Área
-              <p-columnFilter field="assigned_area" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="areaOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="assigned_area" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="areaOptions" optionLabel="label"
+                    optionValue="value" placeholder="Todas" [showClear]="true" (ngModelChange)="filter($event)"
+                    class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 160px">
             <div class="th-cell">
               Operación
-              <p-columnFilter field="operation" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="operationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="operation" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="operationOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 170px">
             <div class="th-cell">
               Tipo
-              <p-columnFilter field="request_type" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="requestTypeOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todos"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="request_type" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="requestTypeOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todos" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
-          <th style="min-width: 160px">
+          <!-- ✅ Agente: min-width 190px -->
+          <th style="min-width: 190px">
             <div class="th-cell">
               Agente <p-columnFilter type="text" field="assigned_agent" display="menu" />
             </div>
@@ -524,35 +379,19 @@
           <th style="min-width: 110px">
             <div class="th-cell">
               Prioridad
-              <p-columnFilter field="priority" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="priorityOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todas"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="priority" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="priorityOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todas" [showClear]="true"
+                    (ngModelChange)="filter($event)" class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
           <th style="min-width: 120px">
             <div class="th-cell">
               Estado
-              <p-columnFilter field="status" matchMode="equals" display="menu"
-                ><ng-template #filter let-value let-filter="filterCallback"
-                  ><p-select
-                    [ngModel]="value"
-                    [options]="statusOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Todos"
-                    [showClear]="true"
-                    (ngModelChange)="filter($event)"
-                    class="w-full" /></ng-template
-              ></p-columnFilter>
+              <p-columnFilter field="status" matchMode="equals" display="menu"><ng-template #filter let-value
+                  let-filter="filterCallback"><p-select [ngModel]="value" [options]="statusOptions" optionLabel="label"
+                    optionValue="value" placeholder="Todos" [showClear]="true" (ngModelChange)="filter($event)"
+                    class="w-full" /></ng-template></p-columnFilter>
             </div>
           </th>
         </tr>
@@ -569,54 +408,47 @@
           <td>
             <span class="ticket-subject">{{ ticket.subject || '—' }}</span>
           </td>
+
+          <!-- ✅ Remitente: nombre completo + email -->
           <td>
             <div class="user-cell">
               <div class="user-av">{{ senderInitial(ticket) }}</div>
               <div class="user-meta">
-                <span class="user-name">{{ displaySender(ticket) }}</span>
-                <span class="user-email" *ngIf="ticket.user_name && ticket.email">{{
-                  ticket.email
-                }}</span>
+                <span class="user-name" [title]="displaySender(ticket)">
+                  {{ displaySender(ticket) }}
+                </span>
+                <span class="user-email" *ngIf="ticket.user_name && ticket.email">
+                  {{ ticket.email }}
+                </span>
               </div>
             </div>
           </td>
+
           <td>
-            <span
-              *ngIf="ticket.application; else empty"
-              class="badge"
-              [ngClass]="getApplicationClass(ticket.application)"
-              >{{ ticket.application }}</span
-            >
+            <span *ngIf="ticket.application; else empty" class="badge"
+              [ngClass]="getApplicationClass(ticket.application)">{{ ticket.application }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.assigned_area; else empty"
-              class="badge"
-              [ngClass]="getAreaClass(ticket.assigned_area)"
-              >{{ ticket.assigned_area }}</span
-            >
+            <span *ngIf="ticket.assigned_area; else empty" class="badge"
+              [ngClass]="getAreaClass(ticket.assigned_area)">{{ ticket.assigned_area }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.operation; else empty"
-              class="badge"
-              [ngClass]="getOperationClass(ticket.operation)"
-              ><i class="pi pi-map-marker"></i> {{ ticket.operation }}</span
-            >
+            <span *ngIf="ticket.operation; else empty" class="badge" [ngClass]="getOperationClass(ticket.operation)"><i
+                class="pi pi-map-marker"></i> {{ ticket.operation }}</span>
           </td>
           <td>
-            <span
-              *ngIf="ticket.request_type; else empty"
-              class="badge"
-              [ngClass]="getRequestTypeClass(ticket.request_type)"
-              >{{ ticket.request_type }}</span
-            >
+            <span *ngIf="ticket.request_type; else empty" class="badge"
+              [ngClass]="getRequestTypeClass(ticket.request_type)">{{ ticket.request_type }}</span>
           </td>
+
+          <!-- ✅ Agente: nombre completo + fallback a email -->
           <td>
-            <div *ngIf="ticket.assigned_agent; else noAgent" class="user-cell">
+            <div *ngIf="ticket.assigned_agent || ticket.agent_name; else noAgent" class="user-cell">
               <div class="user-av agent-av">{{ agentInitial(ticket) }}</div>
               <div class="user-meta">
-                <span class="user-name">{{ displayAgent(ticket) }}</span>
+                <span class="user-name" [title]="displayAgent(ticket)">
+                  {{ displayAgent(ticket) }}
+                </span>
               </div>
             </div>
             <ng-template #noAgent>
@@ -626,31 +458,20 @@
 
           <td>
             <div class="date-stack">
-              <span class="date-item text-muted"
-                ><i class="pi pi-calendar"></i> C:
-                {{ ticket.created_at | date: 'dd/MM/yy HH:mm' }}</span
-              >
-              <span class="date-item text-success" *ngIf="ticket.closed_at"
-                ><i class="pi pi-check-circle"></i> F:
-                {{ ticket.closed_at | date: 'dd/MM/yy HH:mm' }}</span
-              >
+              <span class="date-item text-muted"><i class="pi pi-calendar"></i> C:
+                {{ ticket.created_at | date: 'dd/MM/yy HH:mm' }}</span>
+              <span class="date-item text-success" *ngIf="ticket.closed_at"><i class="pi pi-check-circle"></i> F:
+                {{ ticket.closed_at | date: 'dd/MM/yy HH:mm' }}</span>
             </div>
           </td>
 
           <td>
-            <span
-              class="badge prio-badge"
-              [ngClass]="getPriorityClass(ticket.priority)"
-              [title]="getPriorityTooltip(ticket.priority)"
-              >{{ getPriorityLabel(ticket.priority) }}</span
-            >
+            <span class="badge prio-badge" [ngClass]="getPriorityClass(ticket.priority)"
+              [title]="getPriorityTooltip(ticket.priority)">{{ getPriorityLabel(ticket.priority) }}</span>
           </td>
           <td>
-            <p-tag
-              [value]="translateStatus(ticket.status)"
-              [severity]="getStatusSeverity(ticket.status)"
-              styleClass="status-tag"
-            />
+            <p-tag [value]="translateStatus(ticket.status)" [severity]="getStatusSeverity(ticket.status)"
+              styleClass="status-tag" />
           </td>
         </tr>
         <ng-template #empty><span class="muted-dash">—</span></ng-template>
@@ -672,8 +493,5 @@
 <app-export-modal [(visible)]="exportModalVisible" (onExport)="exportToExcel($event)">
 </app-export-modal>
 
-<app-ticket-detail
-  [(visible)]="drawerVisible"
-  [ticketId]="selectedTicketId"
-  (close)="closeDrawer()"
-></app-ticket-detail>
+<app-ticket-detail [(visible)]="drawerVisible" [ticketId]="selectedTicketId"
+  (close)="closeDrawer()"></app-ticket-detail>

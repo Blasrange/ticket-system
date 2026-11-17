@@ -1,0 +1,69 @@
+<p-dialog
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+  styleClass="export-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <!-- Header Personalizado -->
+  <ng-template pTemplate="header">
+    <div class="export-header">
+      <div class="export-icon-wrapper">
+        <i class="pi pi-file-excel"></i>
+      </div>
+      <div class="export-title-wrap">
+        <h2 class="export-title">Exportar a Excel</h2>
+        <p class="export-subtitle">Descarga el historial de tickets en un archivo</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Cuerpo del Modal -->
+  <div class="export-body">
+    <p class="export-desc">
+      Selecciona el rango de fechas para generar el reporte. El archivo se descargará automáticamente.
+    </p>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Fecha Inicio</label>
+        <input 
+          type="date" 
+          pInputText 
+          [(ngModel)]="startDate" 
+          class="date-input" 
+        />
+      </div>
+
+      <div class="form-field">
+        <label>Fecha Fin</label>
+        <input 
+          type="date" 
+          pInputText 
+          [(ngModel)]="endDate" 
+          class="date-input" 
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer con Botones -->
+  <ng-template pTemplate="footer">
+    <div class="export-footer">
+      <p-button 
+        label="Cancelar" 
+        styleClass="p-button-text p-button-secondary btn-cancel" 
+        (onClick)="close()" 
+      />
+      <p-button 
+        label="Descargar Excel" 
+        icon="pi pi-download" 
+        styleClass="btn-download"
+        [disabled]="!startDate || !endDate" 
+        (onClick)="download()" 
+      />
+    </div>
+  </ng-template>
+</p-dialog>

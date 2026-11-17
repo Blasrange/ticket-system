@@ -1,0 +1,60 @@
+<!-- BOTÓN DE LA CAMPANITA -->
+<button class="topbar-icon-btn" (click)="toggleNotifications($event)" aria-label="Notificaciones">
+  <i class="pi pi-bell"></i>
+  <span class="notif-dot" *ngIf="unreadCount() > 0">
+    {{ unreadCount() > 9 ? '9+' : unreadCount() }}
+  </span>
+</button>
+
+<!-- PANEL DE NOTIFICACIONES -->
+<p-popover #notifPanel styleClass="premium-notif-panel">
+  <div class="notif-header">
+    <div class="notif-title-wrap">
+      <h3>Notificaciones</h3>
+      <span class="notif-badge" *ngIf="unreadCount() > 0">
+        {{ unreadCount() }} nuevas
+      </span>
+    </div>
+    <button class="mark-read-btn" (click)="markAllAsRead()" *ngIf="unreadCount() > 0">
+      Marcar todas
+    </button>
+  </div>
+
+  <div class="notif-legend" *ngIf="unreadCount() > 0">
+    <span class="legend-pill danger" *ngIf="dangerCount() > 0">
+      <i class="pi pi-exclamation-circle"></i> {{ dangerCount() }} vencidos
+    </span>
+    <span class="legend-pill warning" *ngIf="warningCount() > 0">
+      <i class="pi pi-exclamation-triangle"></i> {{ warningCount() }} por vencer
+    </span>
+  </div>
+
+  <div class="notif-list">
+    <div class="notif-item" *ngFor="let n of notifications(); trackBy: trackById" 
+         [class.unread]="!n.read" 
+         [class.is-danger]="n.type === 'danger'" 
+         [class.is-warning]="n.type === 'warning'"
+         (click)="onNotifClick(n)">
+         
+      <div class="notif-icon-wrap" [ngClass]="'notif-icon-' + n.type">
+        <i class="pi" [ngClass]="getNotifIcon(n.type)"></i>
+      </div>
+
+      <div class="notif-content">
+        <div class="notif-content-top">
+          <span class="notif-title">{{ n.title }}</span>
+          <span class="notif-time" [ngClass]="'time-' + n.type">{{ n.time }}</span>
+        </div>
+        <span class="notif-message">{{ n.message }}</span>
+      </div>
+
+      <span class="unread-indicator" *ngIf="!n.read"></span>
+    </div>
+
+    <div class="notif-empty" *ngIf="notifications().length === 0">
+      <div class="empty-icon"><i class="pi pi-bell-slash"></i></div>
+      <span class="empty-title">Todo en orden</span>
+      <span class="empty-sub">No tienes notificaciones pendientes</span>
+    </div>
+  </div>
+</p-popover>

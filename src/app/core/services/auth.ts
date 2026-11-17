@@ -10,15 +10,15 @@ export class AuthService {
   private platformId = inject(PLATFORM_ID);
   private apiUrl = `${environment.apiUrl}/auth-login`;
 
-  login(credentials: { email: string, password: string }): Observable<any> {
+  login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post<any>(this.apiUrl, credentials).pipe(
       map((res: any) => {
         let data = res;
-        
+
         if (Array.isArray(data) && data.length > 0) {
           data = data[0];
         }
-        
+
         if (data && typeof data === 'object' && 'json' in data) {
           data = data.json;
         }
@@ -27,7 +27,7 @@ export class AuthService {
           throw new Error('No se recibieron datos del servidor.');
         }
 
-        const user = data.user || data; 
+        const user = data.user || data;
 
         // 👇 VALIDACIÓN ROBUSTA DE ESTADO ACTIVO (Soporta true, "true", 1, "1")
         const activeString = String(user.is_active).toLowerCase();
@@ -44,15 +44,15 @@ export class AuthService {
           full_name: user.full_name || user.name || credentials.email.split('@')[0],
           email: user.email || credentials.email,
           role: user.role || 'Agente',
-          token: data.token || 'token-local'
+          token: data.token || 'token-local',
         };
       }),
-      tap(userData => {
+      tap((userData) => {
         if (isPlatformBrowser(this.platformId)) {
           localStorage.setItem('ccl_token', userData.token);
           localStorage.setItem('ccl_user', JSON.stringify(userData));
         }
-      })
+      }),
     );
   }
 
@@ -74,10 +74,10 @@ export class AuthService {
     const raw = localStorage.getItem('ccl_user');
     if (!raw) return null;
     const user = JSON.parse(raw);
-    return { 
-      ...user, 
+    return {
+      ...user,
       name: user.full_name || user.name || 'Usuario',
-      role: user.role || 'Agente'
+      role: user.role || 'Agente',
     };
   }
 }

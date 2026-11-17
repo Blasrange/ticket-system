@@ -106,7 +106,7 @@ export class Tickets implements OnInit {
     this.loadTickets();
   }
 
-    loadTickets() {
+  loadTickets() {
     this.loading = true;
     this.cdr.detectChanges(); // Forzamos que el spinner aparezca de inmediato
 
@@ -117,7 +117,9 @@ export class Tickets implements OnInit {
           const sorted = arr
             .map((i: any) => i.json ?? i)
             .sort((a, b) => {
-              return b.ticket_id.localeCompare(a.ticket_id, undefined, { numeric: true });
+              return String(b.ticket_id ?? '').localeCompare(String(a.ticket_id ?? ''), undefined, {
+                numeric: true,
+              });
             });
 
           this.allTickets = sorted;
@@ -176,7 +178,7 @@ export class Tickets implements OnInit {
     return 'green'; // Más del 25% restante (En tiempo)
   }
 
-  // NUEVO: Calcula el mensaje de tiempo restante o vencido
+  // Calcula el mensaje de tiempo restante o vencido
   getRemainingTimeText(ticket: any): string {
     const dueDate = this.getDueDate(ticket);
     if (!dueDate) return '';
@@ -218,12 +220,13 @@ export class Tickets implements OnInit {
       Asunto: t.subject,
       Estado: this.translateStatus(t.status),
       Prioridad: this.getPriorityLabel(t.priority),
-      Remitente: t.email,
+      Remitente: this.displaySender(t),
+      Email: t.email ?? '',
       Área: t.assigned_area,
       Operación: t.operation,
       Tipo: t.request_type,
       Aplicación: t.application,
-      Agente: t.agent_name || t.assigned_agent || 'Sin asignar',
+      Agente: this.displayAgent(t),
       'Fecha Creación': new Date(t.created_at).toLocaleString(),
       'Fecha Cierre': t.closed_at ? new Date(t.closed_at).toLocaleString() : '',
     }));
@@ -247,7 +250,7 @@ export class Tickets implements OnInit {
     this.selectedTicketId = null;
   }
 
-  // ACTUALIZADO: Limpia el input visualmente y los filtros de la tabla
+  // Limpia el input visualmente y los filtros de la tabla
   clearFilters(searchInput?: HTMLInputElement) {
     if (searchInput) {
       searchInput.value = '';
@@ -263,22 +266,61 @@ export class Tickets implements OnInit {
     else this.dtClosed.filterGlobal(val, 'contains');
   }
 
+  // ════════════════════════════════════════════════════════════
+  // DISPLAY HELPERS — Remitente y Agente con nombre completo
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Nombre completo del remitente. Prioriza `user_name`, luego `email`.
+   * Nunca devuelve solo la inicial.
+   */
   displaySender(ticket: any): string {
-    return ticket?.user_name?.trim() || ticket?.email || '—';
+    if (!ticket) return '—';
+    const name = String(ticket.user_name ?? '').trim();
+    if (name) return name;
+    const email = String(ticket.email ?? '').trim();
+    return email || '—';
   }
+
+  /**
+   * Nombre completo del agente. Prioriza `agent_name`, luego `assigned_agent`.
+   * Nunca devuelve solo la inicial.
+   */
   displayAgent(ticket: any): string {
-    return ticket?.agent_name?.trim() || ticket?.assigned_agent || '';
+    if (!ticket) return 'Sin asignar';
+    const name = String(ticket.agent_name ?? '').trim();
+    if (name) return name;
+    const email = String(ticket.assigned_agent ?? '').trim();
+    return email || 'Sin asignar';
   }
+
+  /**
+   * Inicial del remitente para el avatar. Toma el primer carácter del nombre
+   * (o del email si no hay nombre).
+   */
   senderInitial(ticket: any): string {
-    return this.displaySender(ticket).charAt(0).toUpperCase() || '?';
+    const base = this.displaySender(ticket);
+    const ch = base && base !== '—' ? base.charAt(0) : '?';
+    return ch.toUpperCase();
   }
+
+  /**
+   * Inicial del agente para el avatar. Toma el primer carácter del nombre
+   * (o del email si no hay nombre).
+   */
   agentInitial(ticket: any): string {
-    const n = this.displayAgent(ticket);
-    return n ? n.charAt(0).toUpperCase() : '?';
+    const base = this.displayAgent(ticket);
+    if (!base || base === 'Sin asignar') return '?';
+    return base.charAt(0).toUpperCase();
   }
+
   isOverdue(ticket: any): boolean {
     return this.getSlaStatus(ticket) === 'red';
   }
+
+  // ════════════════════════════════════════════════════════════
+  // CLASES CSS DINÁMICAS
+  // ════════════════════════════════════════════════════════════
 
   getOperationClass(op: string): string {
     const s = (op || '').toLowerCase();
@@ -298,6 +340,7 @@ export class Tickets implements OnInit {
                   ? 'op-cali-multiple'
                   : 'op-unknown';
   }
+
   getAreaClass(area: string): string {
     const s = (area || '').toLowerCase();
     return s.includes('implement')
@@ -306,6 +349,7 @@ export class Tickets implements OnInit {
         ? 'area-infra'
         : 'area-unknown';
   }
+
   getApplicationClass(app: string): string {
     const s = (app || '').toLowerCase();
     return s.includes('tms')
@@ -330,6 +374,7 @@ export class Tickets implements OnInit {
                         ? 'app-morph'
                         : 'app-unknown';
   }
+
   getRequestTypeClass(rt: string): string {
     const s = (rt || '').toLowerCase();
     return s.includes('incidente')
@@ -350,6 +395,7 @@ export class Tickets implements OnInit {
                     ? 'rt-mejora'
                     : 'rt-unknown';
   }
+
   getPriorityClass(p: string): string {
     const s = (p || '').toLowerCase();
     return s.startsWith('p1')
@@ -362,6 +408,7 @@ export class Tickets implements OnInit {
             ? 'prio-p4'
             : 'prio-sr';
   }
+
   getPriorityLabel(p: string): string {
     return (
       {
@@ -373,6 +420,7 @@ export class Tickets implements OnInit {
       }[this.getPriorityClass(p)] || 'Media'
     );
   }
+
   getPriorityTooltip(p: string): string {
     return (
       {
@@ -384,6 +432,7 @@ export class Tickets implements OnInit {
       }[this.getPriorityClass(p)] || p
     );
   }
+
   getStatusSeverity(s: string): Severity {
     return (
       ({ Open: 'info', Assigned: 'secondary', 'In progress': 'warn', Closed: 'success' } as any)[
@@ -391,6 +440,7 @@ export class Tickets implements OnInit {
       ] ?? 'secondary'
     );
   }
+
   translateStatus(s: string): string {
     return (
       (

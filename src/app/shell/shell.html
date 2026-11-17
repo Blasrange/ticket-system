@@ -1,171 +1,85 @@
-<div class="app-layout" [class.sidebar-collapsed]="collapsed()">
-  <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon">
-        <i class="pi pi-headphones"></i>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">
-          Mesa Apliaciones
-        </span>        
-        <span class="brand-sub">
-          Mesa de ayuda
-        </span>
-      </div>
-    </div>
+<div class="app-layout">
+  <!-- ===== TOP NAVBAR ===== -->
+  <header class="top-navbar">
 
-    <nav class="sidebar-nav">
-      <span class="nav-group-label">Principal</span>
-
-      <a class="nav-item" routerLink="/home" routerLinkActive="active" title="Dashboard">
-        <span class="nav-icon"><i class="pi pi-home"></i></span>
-        <span>Dashboard</span>
-      </a>
-
-      <a class="nav-item" routerLink="/tickets" routerLinkActive="active" title="Tickets">
-        <span class="nav-icon"><i class="pi pi-ticket"></i></span>
-        <span>Tickets</span>
-      </a>
-
-      <a
-        class="nav-item"
-        routerLink="/kanban-board"
-        routerLinkActive="active"
-        title="Tablero Kanban"
-      >
-        <span class="nav-icon"><i class="pi pi-th-large"></i></span>
-        <span>Tablero Kanban</span>
-      </a>
-
-      <span class="nav-group-label">Administración</span>
-
-      <a class="nav-item" routerLink="/agents" routerLinkActive="active" title="Agentes">
-        <span class="nav-icon"><i class="pi pi-users"></i></span>
-        <span>Agentes</span>
-      </a>
-
-      <!-- <a class="nav-item" routerLink="/settings" routerLinkActive="active" title="Configuración">
-        <span class="nav-icon"><i class="pi pi-cog"></i></span>
-        <span>Configuración</span>
-      </a> -->
-    </nav>
-
-    <!-- USER INFO EN LA PARTE DE ABAJO -->
-    <div class="sidebar-footer">
-      <div class="user-info" [title]="userName">
-        <div class="user-avatar">{{ userInitial }}</div>
-        <div class="user-meta">
-          <span class="user-name">{{ userName }}</span>
-          <span class="user-role">{{ userRole }}</span>
+    <!-- Lado Izquierdo: Logo y Dropdowns -->
+    <div class="nav-left">
+      <!-- Brand / Logo -->
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="pi pi-headphones"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Mesa Aplicaciones</span>
+          <span class="brand-sub">Mesa de ayuda</span>
         </div>
       </div>
+
+      <!-- Menús Desplegables -->
+      <div class="nav-menu">
+
+        <!-- Dropdown: Operaciones -->
+        <div class="dropdown-wrapper">
+          <button class="dropdown-trigger" [class.active]="activeDropdown === 'operaciones'"
+            (click)="toggleDropdown('operaciones', $event)">
+            <i class="pi pi-chart-line"></i>
+            <span>Operaciones</span>
+            <i class="pi pi-chevron-down arrow"></i>
+          </button>
+
+          <div class="dropdown-menu" *ngIf="activeDropdown === 'operaciones'">
+            <!-- <a routerLink="/home" routerLinkActive="active" class="dropdown-item">
+              <i class="pi pi-home"></i> Dashboard
+            </a> -->
+            <a routerLink="/kanban-board" routerLinkActive="active" class="dropdown-item">
+              <i class="pi pi-th-large"></i> Tablero Kanban
+            </a>
+          </div>
+        </div>
+
+        <!-- Dropdown: Gestión -->
+        <div class="dropdown-wrapper">
+          <button class="dropdown-trigger" [class.active]="activeDropdown === 'gestion'"
+            (click)="toggleDropdown('gestion', $event)">
+            <i class="pi pi-briefcase"></i>
+            <span>Gestión</span>
+            <i class="pi pi-chevron-down arrow"></i>
+          </button>
+
+          <div class="dropdown-menu" *ngIf="activeDropdown === 'gestion'">
+            <a routerLink="/tickets" routerLinkActive="active" class="dropdown-item">
+              <i class="pi pi-ticket"></i> Tickets
+            </a>
+            <a routerLink="/agents" routerLinkActive="active" class="dropdown-item">
+              <i class="pi pi-users"></i> Agentes
+            </a>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </aside>
+
+    <!-- Lado Derecho: Acciones Globales -->
+    <div class="nav-right">
+      <app-notification-bell></app-notification-bell>
+      <div class="topbar-divider"></div>
+      <div class="user-badge" [title]="userName + ' - ' + userRole">
+        <div class="user-avatar">{{ userInitial }}</div>
+        <span class="user-role-badge">{{ userRole }}</span>
+      </div>
+      <button class="nav-icon-btn logout-btn" (click)="logout()" title="Cerrar sesión">
+        <i class="pi pi-sign-out"></i>
+      </button>
+    </div>
+  </header>
 
   <!-- ===== CONTENT AREA ===== -->
-  <div class="content-area">
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <button
-          class="toggle-sidebar-btn"
-          (click)="toggleSidebar()"
-          [title]="collapsed() ? 'Expandir menú' : 'Contraer menú'"
-        >
-          <i class="pi" [class.pi-bars]="collapsed()" [class.pi-chevron-left]="!collapsed()"></i>
-        </button>
-        <i class="pi pi-home breadcrumb-icon"></i>
-        <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current">{{ pageTitle() }}</span>
-      </div>
+  <main class="page-content">
+    <!-- Breadcrumb (Migas de pan justo encima de las tablas) -->
+    <div class="breadcrumb-wrapper">
+      <p-breadcrumb [model]="items" [home]="home"></p-breadcrumb>
+    </div>
 
-      <div class="topbar-actions">
-        <!-- BOTÓN DE NOTIFICACIONES -->
-        <button
-          class="topbar-icon-btn"
-          (click)="toggleNotifications($event)"
-          aria-label="Notificaciones"
-        >
-          <i class="pi pi-bell"></i>
-          <span class="notif-dot" *ngIf="unreadCount() > 0">
-            {{ unreadCount() > 9 ? '9+' : unreadCount() }}
-          </span>
-        </button>
-
-        <!-- PANEL DE NOTIFICACIONES -->
-        <p-popover #notifPanel styleClass="premium-notif-panel">
-          <div class="notif-header">
-            <div class="notif-title-wrap">
-              <h3>Notificaciones</h3>
-              <span class="notif-badge" *ngIf="unreadCount() > 0">
-                {{ unreadCount() }} nuevas
-              </span>
-            </div>
-            <button class="mark-read-btn" (click)="markAllAsRead()" *ngIf="unreadCount() > 0">
-              Marcar todas
-            </button>
-          </div>
-
-          <div class="notif-legend" *ngIf="unreadCount() > 0">
-            <span class="legend-pill danger" *ngIf="dangerCount() > 0">
-              <i class="pi pi-exclamation-circle"></i> {{ dangerCount() }} vencidos
-            </span>
-            <span class="legend-pill warning" *ngIf="warningCount() > 0">
-              <i class="pi pi-exclamation-triangle"></i> {{ warningCount() }} por vencer
-            </span>
-          </div>
-
-          <div class="notif-list">
-            <div
-              class="notif-item"
-              *ngFor="let n of notifications(); trackBy: trackById"
-              [class.unread]="!n.read"
-              [class.is-danger]="n.type === 'danger'"
-              [class.is-warning]="n.type === 'warning'"
-              (click)="onNotifClick(n)"
-            >
-              <div class="notif-icon-wrap" [ngClass]="'notif-icon-' + n.type">
-                <i class="pi" [ngClass]="getNotifIcon(n.type)"></i>
-              </div>
-
-              <div class="notif-content">
-                <div class="notif-content-top">
-                  <span class="notif-title">{{ n.title }}</span>
-                  <span class="notif-time" [ngClass]="'time-' + n.type">{{ n.time }}</span>
-                </div>
-                <span class="notif-message">{{ n.message }}</span>
-              </div>
-
-              <span class="unread-indicator" *ngIf="!n.read"></span>
-            </div>
-
-            <div class="notif-empty" *ngIf="notifications().length === 0">
-              <div class="empty-icon"><i class="pi pi-bell-slash"></i></div>
-              <span class="empty-title">Todo en orden</span>
-              <span class="empty-sub">No tienes notificaciones pendientes</span>
-            </div>
-          </div>
-
-          <div class="notif-footer" *ngIf="notifications().length > 0">
-            <button class="view-all-btn" (click)="goToTickets()">
-              <i class="pi pi-arrow-right"></i> Ver todos los tickets
-            </button>
-          </div>
-        </p-popover>
-
-        <div class="topbar-divider"></div>
-
-        <!-- BOTÓN DE SALIR MODERNO (Reemplaza el menú de perfil) -->
-        <button class="logout-topbar-btn" (click)="logout()" title="Cerrar sesión">
-          <i class="pi pi-power-off"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- Page content -->
-    <main class="page-content">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+    <router-outlet></router-outlet>
+  </main>
 </div>

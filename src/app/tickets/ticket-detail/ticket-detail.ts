@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TicketService } from '../../core/services/ticket';
-import { NotificationService } from '../../core/services/notification'; // 👈 IMPORTAMOS
+import { NotificationService } from '../../core/services/notification';
 import { TagModule } from '@openng/optimus-ui/tag';
 import { ButtonModule } from '@openng/optimus-ui/button';
 import { DrawerModule } from '@openng/optimus-ui/drawer';
@@ -58,7 +58,7 @@ export class TicketDetail implements OnChanges {
   private ticketService = inject(TicketService);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
-  private notifService = inject(NotificationService); // 👈 INYECTAMOS
+  private notifService = inject(NotificationService);
 
   @Input() visible = false;
   @Input() ticketId: string | number | null = null;
@@ -209,6 +209,7 @@ export class TicketDetail implements OnChanges {
     this.editStatusValue = this.ticket?.status ?? '';
     this.isEditingStatus = false;
   }
+
   saveStatus() {
     if (!this.ticket) return;
     this.ticketService.updateTicketStatus(this.ticket.ticket_id, this.editStatusValue).subscribe({
@@ -216,12 +217,16 @@ export class TicketDetail implements OnChanges {
         this.ticket.status = this.editStatusValue;
         this.isEditingStatus = false;
         this.cdr.detectChanges();
+        this.notifService.pushManualNotification(
+          'Estado Actualizado',
+          `El ticket #${this.ticket.ticket_id} ahora está "${this.translateStatus(this.editStatusValue)}".`,
+          'info',
+        );
       },
-      error: (err) => {
-        // 👇 REEMPLAZO DEL ALERT
+      error: () => {
         this.notifService.pushManualNotification(
           'Error al actualizar estado',
-          'El servidor rechazó la solicitud. Posiblemente falló el envío del correo (Error 500).',
+          'El servidor rechazó la solicitud.',
           'danger',
         );
       },
@@ -236,6 +241,7 @@ export class TicketDetail implements OnChanges {
     this.editAgentValue = this.ticket?.assigned_agent ?? '';
     this.isEditingAgent = false;
   }
+
   saveAgent() {
     if (!this.ticket) return;
     const selectedAgent = this.agentsList.find((a) => a.email === this.editAgentValue);
@@ -248,12 +254,16 @@ export class TicketDetail implements OnChanges {
           this.ticket.agent_name = agentName;
           this.isEditingAgent = false;
           this.cdr.detectChanges();
+          this.notifService.pushManualNotification(
+            'Agente Asignado',
+            `El ticket #${this.ticket.ticket_id} fue asignado a ${agentName || this.editAgentValue}.`,
+            'info',
+          );
         },
         error: () => {
-          // 👇 REEMPLAZO DEL ALERT
           this.notifService.pushManualNotification(
             'Error al asignar agente',
-            'No se pudo asignar el agente. Intente nuevamente.',
+            'No se pudo asignar el agente.',
             'danger',
           );
         },
@@ -268,6 +278,7 @@ export class TicketDetail implements OnChanges {
     this.editPriorityValue = this.ticket?.priority ?? 'P3';
     this.isEditingPriority = false;
   }
+
   savePriority() {
     if (!this.ticket) return;
     this.ticketService
@@ -277,12 +288,16 @@ export class TicketDetail implements OnChanges {
           this.ticket.priority = this.editPriorityValue;
           this.isEditingPriority = false;
           this.cdr.detectChanges();
+          this.notifService.pushManualNotification(
+            'Prioridad Actualizada',
+            `El ticket #${this.ticket.ticket_id} cambió a prioridad ${this.getPriorityLabel(this.editPriorityValue)}.`,
+            'info',
+          );
         },
         error: () => {
-          // 👇 REEMPLAZO DEL ALERT
           this.notifService.pushManualNotification(
             'Error al actualizar prioridad',
-            'No se pudo cambiar la prioridad del ticket.',
+            'No se pudo cambiar la prioridad.',
             'danger',
           );
         },
@@ -300,12 +315,16 @@ export class TicketDetail implements OnChanges {
         this.replyText = '';
         this.sendingReply = false;
         this.loadTicketMessages();
+        this.notifService.pushManualNotification(
+          'Respuesta Enviada',
+          `Tu respuesta al ticket #${this.ticket.ticket_id} fue enviada correctamente.`,
+          'info',
+        );
       },
       error: () => {
-        // 👇 REEMPLAZO DEL ALERT
         this.notifService.pushManualNotification(
           'Error al enviar respuesta',
-          'No se pudo enviar la respuesta al correo del usuario.',
+          'No se pudo enviar la respuesta al usuario.',
           'danger',
         );
         this.sendingReply = false;
@@ -338,7 +357,6 @@ export class TicketDetail implements OnChanges {
     const rawAttachments = this.normalizeAttachments(item.attachments);
     const cleanBody = this.cleanEmailHtml(rawBody, rawAttachments);
     const isHtml = this.isHtml(rawBody);
-
     return {
       id: item.ticket_id ?? Math.random().toString(),
       from: item.sender_name ?? item.sender_email ?? 'Desconocido',
@@ -355,16 +373,29 @@ export class TicketDetail implements OnChanges {
 
   private normalizeAttachments(raw: any): any[] {
     if (!raw) return [];
+
+    // 1. Si ya es un array, lo devolvemos
     if (Array.isArray(raw)) return raw;
+
+    // 2. Si es un string
     if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
+      const trimmed = raw.trim();
+      // Si parece un JSON (array u objeto), lo parseamos
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          return Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          return [];
+        }
       }
+      // Si es una URL directa, la tratamos como un elemento válido
+      return [trimmed];
     }
+
+    // 3. Si es un objeto, lo envolvemos en un array
     if (typeof raw === 'object') return [raw];
+
     return [];
   }
 
@@ -372,8 +403,11 @@ export class TicketDetail implements OnChanges {
     if (!html) return '';
     const cidMap = new Map<string, string>();
     rawAttachments.forEach((att: any) => {
+      if (typeof att === 'string') return; // Ignoramos strings en el cidMap
+
       const cid = att.content_id ?? att.contentId ?? att.contentID ?? att.cid;
       if (!cid) return;
+
       let src: string | undefined = att.url ?? att.src ?? att.path;
       if (!src) {
         const b64 = att.data ?? att.base64 ?? att.content ?? att.body;
@@ -385,10 +419,12 @@ export class TicketDetail implements OnChanges {
         }
       }
       if (!src) return;
+
       const cleanCid = String(cid).replace(/^<|>$/g, '').trim();
       cidMap.set(cleanCid, src);
       cidMap.set(`cid:${cleanCid}`, src);
     });
+
     let out = html.replace(
       /<img\b([^>]*?)\ssrc=["']cid:([^"']+)["']([^>]*)>/gi,
       (_m, pre, cidVal, post) => {
@@ -397,6 +433,7 @@ export class TicketDetail implements OnChanges {
         return url ? `<img${pre} src="${url}"${post}>` : '';
       },
     );
+
     return out
       .replace(/<img\b[^>]*\ssrc=["']cid:[^"']*["'][^>]*>/gi, '')
       .replace(/\ssrcset=["'][^"']*["']/gi, '');
@@ -411,27 +448,46 @@ export class TicketDetail implements OnChanges {
 
   private extractAttachments(rawList: any[]): Attachment[] {
     const result: Attachment[] = [];
+
     rawList.forEach((att: any) => {
-      let url: string | undefined = att.url ?? att.src ?? att.path;
-      if (!url) {
-        const b64 = att.data ?? att.base64 ?? att.content ?? att.body;
-        if (b64) {
-          const mime =
-            att.mimeType ?? att.content_type ?? att.contentType ?? 'application/octet-stream';
-          url = `data:${mime};base64,${String(b64)
-            .replace(/^data:[^;]+;base64,/, '')
-            .replace(/\s/g, '')}`;
-        }
+      let url: string | undefined;
+      let name = 'archivo';
+      let mime = '';
+
+      // Si el elemento es un string directo (ej. una URL de S3)
+      if (typeof att === 'string') {
+        url = att;
+        const urlParts = url.split('/');
+        name = urlParts[urlParts.length - 1].split('?')[0] || 'archivo';
       }
+      // Si es un objeto
+      else if (att && typeof att === 'object') {
+        url = att.url ?? att.src ?? att.path;
+
+        if (!url) {
+          const b64 = att.data ?? att.base64 ?? att.content ?? att.body;
+          if (b64) {
+            mime =
+              att.mimeType ?? att.content_type ?? att.contentType ?? 'application/octet-stream';
+            url = `data:${mime};base64,${String(b64)
+              .replace(/^data:[^;]+;base64,/, '')
+              .replace(/\s/g, '')}`;
+          }
+        }
+
+        name = att.name ?? att.filename ?? att.fileName ?? 'archivo';
+        mime = att.mimeType ?? att.content_type ?? att.contentType ?? '';
+      }
+
       if (!url) return;
-      const name = att.name ?? att.filename ?? att.fileName ?? 'archivo';
-      const mime = att.mimeType ?? att.content_type ?? att.contentType ?? '';
+
       result.push({
         name,
         url,
         type: mime.startsWith('image/') || this.isImageUrl(url) ? 'image' : 'file',
       });
     });
+
     return result;
   }
 
@@ -450,18 +506,22 @@ export class TicketDetail implements OnChanges {
   safeHtml(html: string) {
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }
+
   isHtml(s: string): boolean {
     return /<[a-z][\s\S]*>/i.test(s ?? '');
   }
+
   getInitial(email: string): string {
     return (email ?? '?').charAt(0).toUpperCase();
   }
+
   openLightbox(src: string) {
     this.lightboxSrc = src;
   }
   closeLightbox() {
     this.lightboxSrc = null;
   }
+
   onCloseDrawer() {
     this.visible = false;
     this.visibleChange.emit(false);
@@ -469,23 +529,24 @@ export class TicketDetail implements OnChanges {
   }
 
   translateStatus(status: string): string {
-    const map: Record<string, string> = {
-      Open: 'Abierto',
-      Assigned: 'Asignado',
-      'In progress': 'En Proceso',
-      Closed: 'Cerrado',
-    };
-    return map[status] ?? status;
+    return (
+      (
+        {
+          Open: 'Abierto',
+          Assigned: 'Asignado',
+          'In progress': 'En Proceso',
+          Closed: 'Cerrado',
+        } as any
+      )[status] ?? status
+    );
   }
 
   getStatusSeverity(status: string): Severity {
-    const map: Record<string, Severity> = {
-      Open: 'info',
-      Assigned: 'secondary',
-      'In progress': 'warn',
-      Closed: 'success',
-    };
-    return map[status] ?? 'secondary';
+    return (
+      ({ Open: 'info', Assigned: 'secondary', 'In progress': 'warn', Closed: 'success' } as any)[
+        status
+      ] ?? 'secondary'
+    );
   }
 
   getPriorityClass(p: string): string {
@@ -501,26 +562,30 @@ export class TicketDetail implements OnChanges {
 
   getPriorityLabel(p: string): string {
     const cls = this.getPriorityClass(p);
-    const map: Record<string, string> = {
-      'prio-p1': 'Crítica',
-      'prio-p2': 'Alta',
-      'prio-p3': 'Media',
-      'prio-p4': 'Baja',
-      'prio-sr': 'Servicio',
-    };
-    return map[cls] ?? 'Media';
+    return (
+      {
+        'prio-p1': 'Crítica',
+        'prio-p2': 'Alta',
+        'prio-p3': 'Media',
+        'prio-p4': 'Baja',
+        'prio-sr': 'Servicio',
+      }[cls] ?? 'Media'
+    );
   }
 
   getPriorityTooltip(p: string): string {
     const cls = this.getPriorityClass(p);
-    const map: Record<string, string> = {
-      'prio-p1': 'P1 – Crítica',
-      'prio-p2': 'P2 – Alta',
-      'prio-p3': 'P3 – Media',
-      'prio-p4': 'P4 – Baja',
-      'prio-sr': 'Solicitud de servicio',
-    };
-    return map[cls] ?? p ?? 'Sin prioridad';
+    return (
+      {
+        'prio-p1': 'P1 – Crítica',
+        'prio-p2': 'P2 – Alta',
+        'prio-p3': 'P3 – Media',
+        'prio-p4': 'P4 – Baja',
+        'prio-sr': 'Solicitud de servicio',
+      }[cls] ??
+      p ??
+      'Sin prioridad'
+    );
   }
 
   getOperationClass(op: string): string {

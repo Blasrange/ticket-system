@@ -1,26 +1,15 @@
-<p-drawer
-  [(visible)]="visible"
-  (onHide)="onCloseDrawer()"
-  position="right"
-  [style]="{ width: '1000px' }"
-  styleClass="ticket-detail-drawer"
->
+<p-drawer [(visible)]="visible" (onHide)="onCloseDrawer()" position="right" [style]="{ width: '1000px' }"
+  styleClass="ticket-detail-drawer">
   <ng-template #header>
     <div class="detail-topbar">
       <div class="topbar-meta" *ngIf="ticket">
         <span class="topbar-id">#{{ ticket.ticket_id }}</span>
-        <span
-          class="badge prio-badge"
-          [ngClass]="getPriorityClass(ticket.priority)"
-          [title]="getPriorityTooltip(ticket.priority)"
-        >
+        <span class="badge prio-badge" [ngClass]="getPriorityClass(ticket.priority)"
+          [title]="getPriorityTooltip(ticket.priority)">
           {{ getPriorityLabel(ticket.priority) }}
         </span>
-        <p-tag
-          [value]="translateStatus(ticket.status)"
-          [severity]="getStatusSeverity(ticket.status)"
-          styleClass="meta-tag"
-        />
+        <p-tag [value]="translateStatus(ticket.status)" [severity]="getStatusSeverity(ticket.status)"
+          styleClass="meta-tag" />
       </div>
     </div>
   </ng-template>
@@ -52,9 +41,7 @@
             <div class="classification-list">
               <div class="classification-item" *ngIf="ticket.assigned_area">
                 <span class="classification-label">Área</span>
-                <span class="badge" [ngClass]="getAreaClass(ticket.assigned_area)">{{
-                  ticket.assigned_area
-                }}</span>
+                <span class="badge" [ngClass]="getAreaClass(ticket.assigned_area)">{{ ticket.assigned_area }}</span>
               </div>
               <div class="classification-item" *ngIf="ticket.operation">
                 <span class="classification-label">Operación</span>
@@ -64,15 +51,12 @@
               </div>
               <div class="classification-item" *ngIf="ticket.application">
                 <span class="classification-label">Aplicación</span>
-                <span class="badge" [ngClass]="getApplicationClass(ticket.application)">{{
-                  ticket.application
-                }}</span>
+                <span class="badge" [ngClass]="getApplicationClass(ticket.application)">{{ ticket.application }}</span>
               </div>
               <div class="classification-item" *ngIf="ticket.request_type">
                 <span class="classification-label">Tipo</span>
-                <span class="badge" [ngClass]="getRequestTypeClass(ticket.request_type)">{{
-                  ticket.request_type
-                }}</span>
+                <span class="badge" [ngClass]="getRequestTypeClass(ticket.request_type)">{{ ticket.request_type
+                  }}</span>
               </div>
             </div>
           </div>
@@ -89,47 +73,20 @@
               <div class="info-row">
                 <span class="info-label">Estado</span>
                 <div *ngIf="!isEditingStatus" class="info-val edit-trigger">
-                  <p-tag
-                    [value]="translateStatus(ticket.status)"
-                    [severity]="getStatusSeverity(ticket.status)"
-                    styleClass="meta-tag"
-                  />
-                  <button
-                    type="button"
-                    class="icon-edit-btn"
-                    (click)="startEditStatus()"
-                    title="Editar estado"
-                  >
+                  <p-tag [value]="translateStatus(ticket.status)" [severity]="getStatusSeverity(ticket.status)"
+                    styleClass="meta-tag" />
+                  <button type="button" class="icon-edit-btn" (click)="startEditStatus()" title="Editar estado">
                     <i class="pi pi-pencil"></i>
                   </button>
                 </div>
                 <div *ngIf="isEditingStatus" class="info-val edit-form">
-                  <p-select
-                    [options]="statusOptions"
-                    [(ngModel)]="editStatusValue"
-                    optionLabel="label"
-                    optionValue="value"
-                    appendTo="body"
-                    size="small"
-                    styleClass="w-full"
-                  />
+                  <p-select [options]="statusOptions" [(ngModel)]="editStatusValue" optionLabel="label"
+                    optionValue="value" appendTo="body" size="small" styleClass="w-full" />
                   <div class="edit-form-actions">
-                    <button
-                      type="button"
-                      class="icon-action-btn ok"
-                      (click)="saveStatus()"
-                      title="Guardar"
-                    >
-                      <i class="pi pi-check"></i>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-action-btn cancel"
-                      (click)="cancelEditStatus()"
-                      title="Cancelar"
-                    >
-                      <i class="pi pi-times"></i>
-                    </button>
+                    <button type="button" class="icon-action-btn ok" (click)="saveStatus()" title="Guardar"><i
+                        class="pi pi-check"></i></button>
+                    <button type="button" class="icon-action-btn cancel" (click)="cancelEditStatus()"
+                      title="Cancelar"><i class="pi pi-times"></i></button>
                   </div>
                 </div>
               </div>
@@ -141,96 +98,42 @@
                     <i class="pi pi-user"></i>
                     <span class="agent-badge-text">{{ displayAgent() }}</span>
                   </span>
-                  <button
-                    type="button"
-                    class="icon-edit-btn"
-                    (click)="startEditAgent()"
-                    title="Asignar agente"
-                  >
+                  <button type="button" class="icon-edit-btn" (click)="startEditAgent()" title="Asignar agente">
                     <i class="pi pi-user-edit"></i>
                   </button>
                 </div>
                 <div *ngIf="isEditingAgent" class="info-val edit-form">
-                  <p-select
-                    [options]="agentsList"
-                    [(ngModel)]="editAgentValue"
-                    optionLabel="full_name"
-                    optionValue="email"
-                    appendTo="body"
-                    placeholder="Seleccionar..."
-                    size="small"
-                    styleClass="w-full"
-                    [filter]="true"
-                    filterBy="full_name,email"
-                  />
+                  <p-select [options]="agentsList" [(ngModel)]="editAgentValue" optionLabel="full_name"
+                    optionValue="email" appendTo="body" placeholder="Seleccionar..." size="small" styleClass="w-full"
+                    [filter]="true" filterBy="full_name,email" />
                   <div class="edit-form-actions">
-                    <button
-                      type="button"
-                      class="icon-action-btn ok"
-                      (click)="saveAgent()"
-                      title="Guardar"
-                    >
-                      <i class="pi pi-check"></i>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-action-btn cancel"
-                      (click)="cancelEditAgent()"
-                      title="Cancelar"
-                    >
-                      <i class="pi pi-times"></i>
-                    </button>
+                    <button type="button" class="icon-action-btn ok" (click)="saveAgent()" title="Guardar"><i
+                        class="pi pi-check"></i></button>
+                    <button type="button" class="icon-action-btn cancel" (click)="cancelEditAgent()" title="Cancelar"><i
+                        class="pi pi-times"></i></button>
                   </div>
                 </div>
               </div>
 
-              <!-- Prioridad Editable -->
               <div class="info-row">
                 <span class="info-label">Prioridad</span>
                 <div *ngIf="!isEditingPriority" class="info-val edit-trigger">
-                  <span
-                    class="badge prio-badge"
-                    [ngClass]="getPriorityClass(ticket.priority)"
-                    [title]="getPriorityTooltip(ticket.priority)"
-                  >
+                  <span class="badge prio-badge" [ngClass]="getPriorityClass(ticket.priority)"
+                    [title]="getPriorityTooltip(ticket.priority)">
                     {{ getPriorityLabel(ticket.priority) }}
                   </span>
-                  <button
-                    type="button"
-                    class="icon-edit-btn"
-                    (click)="startEditPriority()"
-                    title="Editar prioridad"
-                  >
+                  <button type="button" class="icon-edit-btn" (click)="startEditPriority()" title="Editar prioridad">
                     <i class="pi pi-pencil"></i>
                   </button>
                 </div>
                 <div *ngIf="isEditingPriority" class="info-val edit-form">
-                  <p-select
-                    [options]="priorityOptions"
-                    [(ngModel)]="editPriorityValue"
-                    optionLabel="label"
-                    optionValue="value"
-                    appendTo="body"
-                    size="small"
-                    styleClass="w-full"
-                  />
+                  <p-select [options]="priorityOptions" [(ngModel)]="editPriorityValue" optionLabel="label"
+                    optionValue="value" appendTo="body" size="small" styleClass="w-full" />
                   <div class="edit-form-actions">
-                    <button
-                      type="button"
-                      class="icon-action-btn ok"
-                      (click)="savePriority()"
-                      title="Guardar"
-                    >
-                      <i class="pi pi-check"></i>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-action-btn cancel"
-                      (click)="cancelEditPriority()"
-                      title="Cancelar"
-                    >
-                      <i class="pi pi-times"></i>
-                    </button>
+                    <button type="button" class="icon-action-btn ok" (click)="savePriority()" title="Guardar"><i
+                        class="pi pi-check"></i></button>
+                    <button type="button" class="icon-action-btn cancel" (click)="cancelEditPriority()"
+                      title="Cancelar"><i class="pi pi-times"></i></button>
                   </div>
                 </div>
               </div>
@@ -291,81 +194,58 @@
         <div class="thread-column">
           <div class="thread-header">
             <i class="pi pi-comments"></i> Conversación
-            <span class="msg-count"
-              >{{ messages.length }} mensaje{{ messages.length !== 1 ? 's' : '' }}</span
-            >
+            <span class="msg-count">{{ messages.length }} mensaje{{ messages.length !== 1 ? 's' : '' }}</span>
           </div>
 
           <div class="thread-list">
-            <div
-              *ngFor="let msg of messages"
-              class="message-bubble"
-              [class.bubble-agent]="msg.isAgent"
-              [class.bubble-user]="!msg.isAgent"
-            >
+            <div *ngFor="let msg of messages" class="message-bubble" [class.bubble-agent]="msg.isAgent"
+              [class.bubble-user]="!msg.isAgent">
               <div class="bubble-header">
                 <div class="bubble-avatar" [class.av-agent]="msg.isAgent">
                   {{ getInitial(msg.from) }}
                 </div>
                 <div class="bubble-meta">
                   <span class="bubble-from">{{ msg.from }}</span>
-                  <span class="bubble-role">{{
-                    msg.isAgent ? 'Agente de soporte' : 'Usuario'
-                  }}</span>
+                  <span class="bubble-role">{{ msg.isAgent ? 'Agente de soporte' : 'Usuario' }}</span>
                 </div>
                 <span class="bubble-date">{{ msg.date | date: 'dd/MM/yyyy HH:mm' }}</span>
               </div>
 
               <div class="bubble-body">
-                <div
-                  *ngIf="msg.isHtml"
-                  class="msg-html"
-                  [innerHTML]="safeHtml(msg.cleanBody)"
-                ></div>
+                <div *ngIf="msg.isHtml" class="msg-html" [innerHTML]="safeHtml(msg.cleanBody)"></div>
                 <div *ngIf="!msg.isHtml && msg.body" class="msg-plain">{{ msg.body }}</div>
-                <div
-                  *ngIf="!msg.body && !msg.attachments?.length && !msg.htmlImages?.length"
-                  class="msg-empty"
-                >
+                <div *ngIf="!msg.body && !msg.attachments?.length && !msg.htmlImages?.length" class="msg-empty">
                   <i class="pi pi-minus"></i> Sin contenido
                 </div>
               </div>
 
+              <!-- Galería de imágenes embebidas en el HTML -->
               <div class="image-gallery" *ngIf="msg.isHtml && msg.htmlImages?.length > 1">
                 <div class="gallery-label"><i class="pi pi-image"></i> Imágenes del mensaje</div>
                 <div class="gallery-grid">
-                  <div
-                    class="gallery-thumb"
-                    *ngFor="let img of msg.htmlImages"
-                    (click)="openLightbox(img)"
-                  >
+                  <div class="gallery-thumb" *ngFor="let img of msg.htmlImages" (click)="openLightbox(img)">
                     <img [src]="safeUrl(img)" alt="imagen" />
                     <div class="thumb-overlay"><i class="pi pi-search-plus"></i></div>
                   </div>
                 </div>
               </div>
 
+              <!-- Archivos Adjuntos (S3, etc) -->
               <div class="attachments" *ngIf="msg.attachments?.length">
                 <div class="gallery-label">
                   <i class="pi pi-paperclip"></i> Adjuntos ({{ msg.attachments.length }})
                 </div>
                 <div class="attach-list">
                   <ng-container *ngFor="let att of msg.attachments">
-                    <div
-                      *ngIf="att.type === 'image'"
-                      class="gallery-thumb"
-                      (click)="openLightbox(att.url)"
-                    >
+                    <!-- Si es imagen, muestra la miniatura -->
+                    <div *ngIf="att.type === 'image'" class="gallery-thumb" (click)="openLightbox(att.url)">
                       <img [src]="safeUrl(att.url)" [alt]="att.name" />
                       <div class="thumb-overlay"><i class="pi pi-search-plus"></i></div>
                     </div>
-                    <a
-                      *ngIf="att.type !== 'image'"
-                      class="file-attach"
-                      [href]="safeUrl(att.url)"
-                      target="_blank"
-                      rel="noopener"
-                    >
+
+                    <!-- Si no es imagen, muestra el chip de descarga -->
+                    <a *ngIf="att.type !== 'image'" class="file-attach" [href]="safeUrl(att.url)" target="_blank"
+                      rel="noopener">
                       <i class="pi pi-file"></i><span>{{ att.name }}</span>
                     </a>
                   </ng-container>
@@ -376,23 +256,11 @@
 
           <div class="reply-box" *ngIf="!isTicketClosed">
             <div class="reply-row">
-              <textarea
-                pTextarea
-                [(ngModel)]="replyText"
-                rows="2"
-                placeholder="Escribe una respuesta al usuario..."
-                class="reply-textarea"
-                [autoResize]="true"
-              ></textarea>
+              <textarea pTextarea [(ngModel)]="replyText" rows="2" placeholder="Escribe una respuesta al usuario..."
+                class="reply-textarea" [autoResize]="true"></textarea>
               <div class="reply-actions">
-                <p-button
-                  label="Enviar"
-                  icon="pi pi-send"
-                  size="small"
-                  [loading]="sendingReply"
-                  [disabled]="!replyText.trim()"
-                  (onClick)="sendReply()"
-                />
+                <p-button label="Enviar" icon="pi pi-send" size="small" [loading]="sendingReply"
+                  [disabled]="!replyText.trim()" (onClick)="sendReply()" />
               </div>
             </div>
           </div>

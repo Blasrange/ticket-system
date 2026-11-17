@@ -11,16 +11,8 @@
 
     <!-- Filtros y Botones -->
     <div class="header-actions">
-      <!-- Selector de Área -->
-      <p-select
-        [options]="areaOptions"
-        [(ngModel)]="selectedArea"
-        optionLabel="label"
-        optionValue="value"
-        (ngModelChange)="onFilterChange()"
-        placeholder="Filtrar Área"
-        styleClass="header-select"
-      />
+      <p-select [options]="areaOptions" [(ngModel)]="selectedArea" optionLabel="label" optionValue="value"
+        (ngModelChange)="onFilterChange()" placeholder="Filtrar Área" styleClass="header-select" />
 
       <button class="btn-refresh" (click)="loadTickets()" [disabled]="loading">
         <i class="pi pi-refresh" [class.spinning]="loading"></i>
@@ -33,6 +25,7 @@
   <div class="kanban-board" cdkDropListGroup>
     <!-- Contenedor de la Columna -->
     <div class="kanban-column" *ngFor="let col of columns">
+
       <!-- ENCABEZADO -->
       <div class="column-header" [ngClass]="'header-' + col.id.replace(' ', '-').toLowerCase()">
         <div class="col-title">
@@ -43,29 +36,16 @@
       </div>
 
       <!-- Zona de Tarjetas -->
-      <div
-        class="column-body"
-        cdkDropList
-        [cdkDropListData]="col.tickets"
-        (cdkDropListDropped)="drop($event, col.id)"
-      >
-        <div
-          class="kanban-card"
-          *ngFor="let ticket of col.tickets"
-          cdkDrag
-          (click)="openTicket(ticket)"
-        >
+      <div class="column-body" cdkDropList [cdkDropListData]="col.tickets" (cdkDropListDropped)="drop($event, col.id)">
+
+        <div class="kanban-card" *ngFor="let ticket of col.tickets" cdkDrag (click)="openTicket(ticket)">
           <!-- Luz superior -->
           <div class="card-glow" [ngClass]="'glow-' + col.id.replace(' ', '-').toLowerCase()"></div>
 
           <div class="card-header">
             <span class="card-id">#{{ ticket.ticket_id }}</span>
-
-            <span
-              class="badge prio-badge"
-              [ngClass]="getPriorityClass(ticket.priority)"
-              [title]="getPriorityTooltip(ticket.priority)"
-            >
+            <span class="badge prio-badge" [ngClass]="getPriorityClass(ticket.priority)"
+              [title]="getPriorityTooltip(ticket.priority)">
               {{ getPriorityLabel(ticket.priority) }}
             </span>
           </div>
@@ -74,29 +54,15 @@
             <p class="card-subject">{{ ticket.subject }}</p>
 
             <!-- Etiquetas de Contexto -->
-            <div
-              class="card-tags"
-              *ngIf="ticket.assigned_area || ticket.operation || ticket.request_type"
-            >
-              <span
-                *ngIf="ticket.assigned_area"
-                class="badge badge-xs"
-                [ngClass]="getAreaClass(ticket.assigned_area)"
-              >
+            <div class="card-tags" *ngIf="ticket.assigned_area || ticket.operation || ticket.request_type">
+              <span *ngIf="ticket.assigned_area" class="badge badge-xs" [ngClass]="getAreaClass(ticket.assigned_area)">
                 {{ ticket.assigned_area }}
               </span>
-              <span
-                *ngIf="ticket.operation"
-                class="badge badge-xs"
-                [ngClass]="getOperationClass(ticket.operation)"
-              >
+              <span *ngIf="ticket.operation" class="badge badge-xs" [ngClass]="getOperationClass(ticket.operation)">
                 <i class="pi pi-map-marker"></i> {{ ticket.operation }}
               </span>
-              <span
-                *ngIf="ticket.request_type"
-                class="badge badge-xs"
-                [ngClass]="getRequestTypeClass(ticket.request_type)"
-              >
+              <span *ngIf="ticket.request_type" class="badge badge-xs"
+                [ngClass]="getRequestTypeClass(ticket.request_type)">
                 {{ ticket.request_type }}
               </span>
             </div>
@@ -104,46 +70,58 @@
 
           <!-- Footer de la Tarjeta -->
           <div class="card-footer">
-            <!-- Remitente (Creador) -->
+
+            <!-- Remitente -->
             <div class="user-info" title="Creado por">
               <div class="avatar">{{ senderInitial(ticket) }}</div>
               <span class="email">{{ displaySender(ticket) }}</span>
             </div>
 
-            <!-- Agente y SLA -->
+            <!-- Agente y Fechas/SLA -->
             <div class="footer-right">
-              <div
-                class="agent-info"
-                *ngIf="ticket.assigned_agent; else noAgent"
-                title="Agente asignado"
-              >
+
+              <!-- Avatar Agente -->
+              <div class="agent-info" *ngIf="ticket.assigned_agent || ticket.agent_name; else noAgent" title="Agente asignado">
                 <div class="avatar agent-av">{{ agentInitial(ticket) }}</div>
               </div>
               <ng-template #noAgent>
                 <span class="no-agent" title="Sin asignar"><i class="pi pi-user-minus"></i></span>
               </ng-template>
 
-              <!-- SLA BARRA -->
-              <div class="sla-container" [title]="getRemainingTimeText(ticket)">
-                <div class="sla-header">
-                  <span class="date-mini" [ngClass]="'text-' + getSlaStatus(ticket)">
-                    <i class="pi pi-calendar"></i> {{ getDueDate(ticket) | date: 'dd/MM HH:mm' }}
-                  </span>
-                  <span class="sla-pct" [ngClass]="'text-' + getSlaStatus(ticket)"
-                    >{{ getSlaPercentage(ticket) }}%</span
-                  >
+              <!-- CONDICIÓN: Si NO está cerrado, muestra el SLA. Si está cerrado, muestra las fechas -->
+              <ng-container *ngIf="ticket.status !== 'Closed'; else closedDates">
+                <div class="sla-container" [title]="getRemainingTimeText(ticket)">
+                  <div class="sla-header">
+                    <span class="date-mini" [ngClass]="'text-' + getSlaStatus(ticket)">
+                      <i class="pi pi-calendar"></i> {{ getDueDate(ticket) | date: 'dd/MM HH:mm' }}
+                    </span>
+                    <span class="sla-pct" [ngClass]="'text-' + getSlaStatus(ticket)">
+                      {{ getSlaPercentage(ticket) }}%
+                    </span>
+                  </div>
+                  <div class="sla-track">
+                    <div class="sla-fill" [ngClass]="'bg-' + getSlaStatus(ticket)"
+                      [style.width.%]="getSlaPercentage(ticket)"></div>
+                  </div>
+                  <!-- ✅ CAMBIO: Ahora muestra la Fecha de Vencimiento (deja "Quedan X" en el tooltip) -->
+                  <div class="sla-message" [ngClass]="'text-' + getSlaStatus(ticket)">
+                    <i class="pi pi-clock"></i> {{ getDueDate(ticket) | date: 'dd/MM/yy HH:mm' }}
+                  </div>
                 </div>
-                <div class="sla-track">
-                  <div
-                    class="sla-fill"
-                    [ngClass]="'bg-' + getSlaStatus(ticket)"
-                    [style.width.%]="getSlaPercentage(ticket)"
-                  ></div>
+              </ng-container>
+
+              <!-- Fechas de Inicio y Fin (Solo para cerrados) -->
+              <ng-template #closedDates>
+                <div class="date-stack-mini">
+                  <div class="date-item text-muted" title="Fecha de creación">
+                    <i class="pi pi-calendar"></i> {{ ticket.created_at | date: 'dd/MM/yy HH:mm' }}
+                  </div>
+                  <div class="date-item text-success" *ngIf="ticket.closed_at" title="Fecha de cierre">
+                    <i class="pi pi-check-circle"></i> {{ ticket.closed_at | date: 'dd/MM/yy HH:mm' }}
+                  </div>
                 </div>
-                <div class="sla-message" [ngClass]="'text-' + getSlaStatus(ticket)">
-                  {{ getRemainingTimeText(ticket) }}
-                </div>
-              </div>
+              </ng-template>
+
             </div>
           </div>
         </div>
@@ -151,16 +129,12 @@
         <!-- Placeholder visual -->
         <div class="empty-column" *ngIf="col.tickets.length === 0">
           <i class="pi pi-inbox" style="font-size: 1.5rem; margin-bottom: 8px; opacity: 0.5"></i>
-          <br />Sin tiques
+          <br />Sin tickets
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<app-ticket-detail
-  [(visible)]="drawerVisible"
-  [ticketId]="selectedTicketId"
-  (close)="closeDrawer()"
->
+<app-ticket-detail [(visible)]="drawerVisible" [ticketId]="selectedTicketId" (close)="closeDrawer()">
 </app-ticket-detail>

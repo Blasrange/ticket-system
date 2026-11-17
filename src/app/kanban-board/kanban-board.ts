@@ -9,7 +9,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { TicketService } from '../core/services/ticket';
 import { AuthService } from '../core/services/auth';
-import { NotificationService } from '../core/services/notification'; // 👈 IMPORTAMOS
+import { NotificationService } from '../core/services/notification';
 import { TagModule } from '@openng/optimus-ui/tag';
 import { ButtonModule } from '@openng/optimus-ui/button';
 import { SelectModule } from '@openng/optimus-ui/select';
@@ -36,10 +36,9 @@ export class KanbanBoard implements OnInit {
   private ticketService = inject(TicketService);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
-  private notifService = inject(NotificationService); // 👈 INYECTAMOS
+  private notifService = inject(NotificationService);
 
   loading = true;
-
   currentUser: any = { email: '', name: '', role: 'Agente' };
 
   areaOptions = [
@@ -48,7 +47,6 @@ export class KanbanBoard implements OnInit {
     { label: 'Infraestructura', value: 'Infraestructura' },
   ];
   selectedArea = '';
-
   allTicketsRaw: any[] = [];
 
   columns = [
@@ -69,11 +67,7 @@ export class KanbanBoard implements OnInit {
   loadCurrentUser() {
     const user = this.authService.getUser();
     if (user) {
-      this.currentUser = {
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      };
+      this.currentUser = { email: user.email, name: user.name, role: user.role };
     }
   }
 
@@ -84,9 +78,7 @@ export class KanbanBoard implements OnInit {
         const arr = Array.isArray(res) ? res : res ? [res] : [];
         this.allTicketsRaw = arr
           .map((i: any) => i.json ?? i)
-          .sort((a, b) => {
-            return b.ticket_id.localeCompare(a.ticket_id, undefined, { numeric: true });
-          });
+          .sort((a, b) => b.ticket_id.localeCompare(a.ticket_id, undefined, { numeric: true }));
 
         this.applyFiltersAndRoles();
         this.loading = false;
@@ -101,7 +93,6 @@ export class KanbanBoard implements OnInit {
 
   applyFiltersAndRoles() {
     this.columns.forEach((c) => (c.tickets = []));
-
     let filtered = [...this.allTicketsRaw];
 
     if (this.selectedArea) {
@@ -131,11 +122,8 @@ export class KanbanBoard implements OnInit {
 
     filtered.forEach((t) => {
       const col = this.columns.find((c) => c.id === t.status);
-      if (col) {
-        col.tickets.push(t);
-      } else {
-        this.columns[0].tickets.push(t);
-      }
+      if (col) col.tickets.push(t);
+      else this.columns[0].tickets.push(t);
     });
   }
 
@@ -159,18 +147,21 @@ export class KanbanBoard implements OnInit {
       this.ticketService.updateTicketStatus(ticket.ticket_id, newStatus).subscribe({
         next: () => {
           ticket.status = newStatus;
-          if (newStatus === 'Closed') {
-            ticket.closed_at = new Date().toISOString();
-          }
+          if (newStatus === 'Closed') ticket.closed_at = new Date().toISOString();
+
+          this.notifService.pushManualNotification(
+            'Estado Actualizado',
+            `El ticket #${ticket.ticket_id} se movió a "${this.translateStatus(newStatus)}".`,
+            'info',
+          );
         },
         error: () => {
-          // 👇 REEMPLAZO DEL ALERT
           this.notifService.pushManualNotification(
             'Error al mover ticket',
-            'No se pudo actualizar el estado en el servidor. Verifica la conexión o el envío de correo.',
+            'No se pudo actualizar el estado en el servidor.',
             'danger',
           );
-          this.loadTickets(); // Recargamos para restaurar la tarjeta a su columna original
+          this.loadTickets();
         },
       });
     }
@@ -211,8 +202,7 @@ export class KanbanBoard implements OnInit {
     const totalMs = this.getSlaHours(ticket.priority) * 60 * 60 * 1000;
     const now = ticket.closed_at ? new Date(ticket.closed_at).getTime() : Date.now();
     const elapsed = now - new Date(ticket.created_at).getTime();
-    const percent = 100 - (elapsed / totalMs) * 100;
-    return Math.max(0, Math.min(100, Math.round(percent)));
+    return Math.max(0, Math.min(100, Math.round(100 - (elapsed / totalMs) * 100)));
   }
 
   getSlaStatus(ticket: any): 'green' | 'yellow' | 'red' {
@@ -225,22 +215,17 @@ export class KanbanBoard implements OnInit {
   getRemainingTimeText(ticket: any): string {
     const dueDate = this.getDueDate(ticket);
     if (!dueDate) return '';
-
     const now = ticket.closed_at ? new Date(ticket.closed_at).getTime() : Date.now();
     const diffMs = dueDate.getTime() - now;
-    const isOverdue = diffMs <= 0;
     const absDiff = Math.abs(diffMs);
-
     const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((absDiff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((absDiff / (1000 * 60)) % 60);
-
     let timeStr = '';
     if (days > 0) timeStr += `${days}d `;
     if (hours > 0 || days > 0) timeStr += `${hours}h `;
     timeStr += `${minutes}m`;
-
-    return isOverdue ? `Vencido hace ${timeStr}` : `Quedan ${timeStr}`;
+    return diffMs <= 0 ? `Vencido hace ${timeStr}` : `Quedan ${timeStr}`;
   }
 
   // ════════════════════════════════════════════════════════════
@@ -256,8 +241,7 @@ export class KanbanBoard implements OnInit {
     return this.displaySender(ticket).charAt(0).toUpperCase() || '?';
   }
   agentInitial(ticket: any): string {
-    const n = this.displayAgent(ticket);
-    return n ? n.charAt(0).toUpperCase() : '?';
+    return this.displayAgent(ticket).charAt(0).toUpperCase() || '?';
   }
 
   getOperationClass(op: string): string {
@@ -362,6 +346,18 @@ export class KanbanBoard implements OnInit {
         'prio-p4': 'P4 – Baja',
         'prio-sr': 'Solicitud de servicio',
       }[this.getPriorityClass(p)] || p
+    );
+  }
+  translateStatus(s: string): string {
+    return (
+      (
+        {
+          Open: 'Abierto',
+          Assigned: 'Asignado',
+          'In progress': 'En Proceso',
+          Closed: 'Cerrado',
+        } as any
+      )[s] ?? s
     );
   }
 }

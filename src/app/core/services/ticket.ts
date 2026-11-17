@@ -48,7 +48,12 @@ export class TicketService {
     });
   }
 
-  sendReply(ticketId: string, body: string, senderEmail: string, files: File[] = []): Observable<any> {
+  sendReply(
+    ticketId: string,
+    body: string,
+    senderEmail: string,
+    files: File[] = [],
+  ): Observable<any> {
     if (files.length > 0) {
       console.warn(`[sendReply] Archivos no soportados aún.`);
     }
